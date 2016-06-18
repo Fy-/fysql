@@ -6,7 +6,6 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
-from collections import OrderedDict
 
 class SQLEntity(object):
     """

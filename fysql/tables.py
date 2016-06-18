@@ -8,8 +8,8 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 
-from .columns import *
-from .entities import *
+from .columns import Column, PKeyColumn
+from .entities import SQLTable
 from .containers import SelectContainer
 from .exceptions import FysqlException
 
