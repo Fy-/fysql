@@ -6,7 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
-from .entities import SQLColumn, SQLCondition
+from .entities import SQLColumn, SQLCondition, SQLQuotedEntity
 from .exceptions import FysqlException
 
 class Column(object):
@@ -31,9 +31,12 @@ class Column(object):
         self.name   = name
         self.sql_column   = self.sql_column if self.sql_column else self.name
         self.sql_entities = { # SQL entities for Column
-            'condition': SQLColumn(self.table._name, self.sql_column),
-            'selection': SQLColumn(self.table._name, self.sql_column, '{0}_{1}'.format(self.table._name, self.sql_column))
+            'name'     : SQLColumn(self.sql_column),
+            'condition': SQLColumn(self.sql_column, self.table._db_table),
+            'selection': SQLColumn(self.sql_column, self.table._db_table, '{0}_{1}'.format(self.table._db_table, self.sql_column))
         }
+        if self.index:
+            self.sql_entities['index'] = SQLQuotedEntity('{0}_index'.format(self.sql_column))
 
     def _dict(self, value):
         pass
@@ -98,17 +101,40 @@ class Column(object):
 class VirtualColumn(object):pass
 
 class CharColumn(Column):
+    sql_type = 'varchar'
+
+    def __init__(self, max_length=255, **kwargs):
+        super(CharColumn, self).__init__(**kwargs)
+
+        self.sql_type_size = max_length
+
+        if self.index and max_length > 190:
+            self.sql_type_size = 190
+        
+
     def _escape(self, value):
         # @todo: to_unicode, escape_string
         value = value
         return '\'{0}\''.format(value)
 
 class IntegerColumn(Column):
+    sql_type = 'int'
+    sql_type_size = 11
+
     def _escape(self, value):
         return unicode(int(value))
 
-class BigIntegerColumn(IntegerColumn): pass
+class TinyIntegerColumn(IntegerColumn):
+    sql_type = 'tinyint'
+    sql_type_size = 4
 
+class SmallIntegerColumn(IntegerColumn):
+    sql_type = 'smallint'
+    sql_type_size = 6
+
+class BigIntegerColumn(IntegerColumn):
+    sql_type = 'bigint'
+    sql_type_size = 20
 
 class PKeyColumn(BigIntegerColumn):
     def __init__(self, **kwargs):

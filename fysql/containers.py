@@ -7,6 +7,7 @@
 """
 from __future__ import unicode_literals
 from .entities import SQLEntity, SQLJoin, SQLCondition
+from .columns import FKeyColumn, PKeyColumn
 
 class ContainerWalker(object):
     """
@@ -63,20 +64,82 @@ class EntityContainer(object):
     @property
     def walker(self):
         if not self._walker:
-            self._walker = ContainerWalker(entities=self.entities, separator=self.separator)
+            self._walker = ContainerWalker(self.entities, self.separator)
         return self._walker
 
     @property
     def sql(self):
         return self.walker.sql
 
-class SelectContainer(EntityContainer):
+class EntityExecutableContainer(EntityContainer):
+    def __init__(self, table):
+        super(EntityExecutableContainer, self).__init__()
+        self.table = table
+
+class DropContainer(EntityExecutableContainer):
+    """
+        Contain a list representing a DROP query
+    """
+    def __init__(self, table):
+        super(DropContainer, self).__init__(table)
+        self += SQLEntity('DROP TABLE IF EXISTS {0};'.format(self.table._sql_entity))
+
+
+class CreateContainer(EntityExecutableContainer):
+    """
+        Contain a list representing a CREATE query
+    """
+    def __init__(self, table):
+        super(CreateContainer, self).__init__(table)
+
+        self += SQLEntity('CREATE TABLE IF NOT EXISTS {0} ('.format(self.table._sql_entity))
+        
+        args_create = EntityContainer(separator=', ')
+        indexes     = EntityContainer(separator=', ')
+
+        indexes += SQLEntity('PRIMARY KEY ({0})'.format(self.table._pkey.sql_entities['name']))
+
+        for key, column in self.table._columns.items():
+            column_create = EntityContainer(separator=' ')
+            column_create += column.sql_entities['name']
+            
+            if column.sql_type_size:
+                column_create += SQLEntity('{0}({1})'.format(column.sql_type, column.sql_type_size))
+            else:
+                column_create += SQLEntity(column.sql_type)
+
+            if isinstance(column, FKeyColumn) or isinstance(column, PKeyColumn):
+                column_create += SQLEntity('UNSIGNED')
+
+            if column.unique and not column.index:
+                column_create += SQLEntity('UNIQUE')
+
+            if column.null == False:
+                column_create += SQLEntity('NOT NULL')
+            else:
+                column_create += SQLEntity('NULL')
+
+            if column.default:
+                column_create += SQLEntity('DEFAULT {0}'.format(column.escape(column.default)))
+
+            args_create += column_create
+
+            if column.index:
+                unique = '' if not column.unique else 'UNIQUE'
+                indexes += SQLEntity('{0} INDEX {1} ({2})'.format(unique, column.sql_entities['index'], column.sql_entities['name']))
+
+        args_create += indexes
+
+        self += args_create
+
+        self += SQLEntity(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;')
+
+class SelectContainer(EntityExecutableContainer):
     """
         Contain a list representing a SELECT query
     """
     def __init__(self, table):
-        super(SelectContainer, self).__init__()
-        self.table = table
+        super(SelectContainer, self).__init__(table)
 
         # add selected columns
         columns = EntityContainer(separator=',')
@@ -122,4 +185,8 @@ class SelectContainer(EntityContainer):
                     
                 i += 1
 
+        return self
+
+    def limit(self, limit, position=0):
+        self += SQLEntity('LIMIT {0},{1}'.format(position, limit))
         return self

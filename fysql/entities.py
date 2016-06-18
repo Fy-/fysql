@@ -19,27 +19,31 @@ class SQLEntity(object):
     def __unicode__(self):
         return self._value
 
-class SQLColumn(SQLEntity):
+class SQLQuotedEntity(SQLEntity):
+    quote = '`'
+
+class SQLColumn(SQLQuotedEntity):
     """
         SQLColumn: represents a column in a table
     """
-    quote     = '`'
-
-    def __init__(self, column_table, column_name, column_alias=False):
-        if not column_alias:
-            self._value = '{0}{1}{0}.{0}{2}{0}'.format(self.quote, column_table, column_name)
+    def __init__(self, column_name, column_table = False, column_alias=False):
+        if not column_table:
+            name = '{0}{1}{0}'.format(self.quote, column_name)
         else:
-            self._value = '{0}{1}{0}.{0}{2}{0} AS {3}'.format(self.quote, column_table, column_name, column_alias)
+            name = '{0}{1}{0}.{0}{2}{0}'.format(self.quote, column_table, column_name)
+
+        if column_alias:
+            self._value = '{0} AS {1}'.format(name, column_alias)
+        else:
+            self._value = name
 
     def __unicode__(self):
         return self._value
 
-class SQLTable(SQLEntity): 
+class SQLTable(SQLQuotedEntity): 
     """
         SQLColumn: represents a table in a database
     """
-    quote     = '`'
-
     def __init__(self, name, table_alias=False):
         if not table_alias:
             super(SQLTable, self).__init__(name)

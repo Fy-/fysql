@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from .columns import Column, PKeyColumn
 from .entities import SQLTable
-from .containers import SelectContainer
+from .containers import SelectContainer, CreateContainer, DropContainer
 from .exceptions import FysqlException
 
 tables = OrderedDict()
@@ -92,6 +92,18 @@ class Table(object):
     @classmethod
     def where(cls, *conditions):
         return SelectContainer(cls).where(*conditions)
+
+    @classmethod
+    def limit(cls, limit, position=0):
+        return SelectContainer(cls).limit(limit, position)
+
+    @classmethod
+    def create(cls):
+        return CreateContainer(cls)
+
+    @classmethod
+    def drop(cls):
+        return DropContainer(cls)
 
     # Helpers
     @classmethod
