@@ -96,13 +96,7 @@ class Table(object):
     # Helpers
     @classmethod
     def _add_column(cls, key, column):
-        cls._del_column(key)
         cls._columns[key] = column
-
-    @classmethod
-    def _del_column(cls, key):
-        if key in cls._columns:
-            del cls._columns[key]
 
     @classmethod
     def _set_default(cls, key, value):
