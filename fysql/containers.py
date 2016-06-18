@@ -67,14 +67,14 @@ class EntityContainer(object):
             self._walker = ContainerWalker(self.entities, self.separator)
         return self._walker
 
-    @property
-    def sql(self):
-        return self.walker.sql
-
 class EntityExecutableContainer(EntityContainer):
     def __init__(self, table):
         super(EntityExecutableContainer, self).__init__()
         self.table = table
+
+    @property
+    def sql(self):
+        return self.walker.sql
 
 class DropContainer(EntityExecutableContainer):
     """
