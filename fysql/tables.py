@@ -13,6 +13,8 @@ from .entities import SQLTable
 from .containers import SelectContainer
 from .exceptions import FysqlException
 
+tables = OrderedDict()
+
 class TableWatcher(type):
     """
         TableWatcher: Watch declaration of subclasses of Table and initialize the data
@@ -51,13 +53,14 @@ class TableWatcher(type):
             cls._columns    = OrderedDict()
             cls._defaults   = OrderedDict()
             cls._backrefs   = OrderedDict()
-            cls._foreigns   = OrderedDict()
+            cls._foreigns   = []
             cls._database   = db
 
             # Add a primary key named 'id' if no primary key
             if pkey == False:
                 pkey = PKeyColumn()
                 columns.insert(0, ('id', pkey))
+                setattr(cls, 'id', pkey)
 
             cls._pkey = pkey
 
@@ -67,6 +70,12 @@ class TableWatcher(type):
 
                 if column.default:
                     cls._set_default(key, column.default) # save default value
+
+            # add table to tables.
+            if tables.has_key(cls._name):
+                del tables[cls._name]
+
+            tables[cls._name] = cls
 
         super(TableWatcher, cls).__init__(name, bases, clsdict)
 
@@ -94,3 +103,7 @@ class Table(object):
     @classmethod
     def _set_default(cls, key, value):
         cls._defaults[key] = value
+
+    @classmethod
+    def _add_foreign(cls, table, left_on, right_on):
+        cls._foreigns.append({'table': table, 'left_on':unicode(left_on), 'right_on':unicode(right_on)})

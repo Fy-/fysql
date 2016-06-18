@@ -6,7 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
-from .entities import SQLEntity
+from .entities import SQLEntity, SQLJoin
 
 class ContainerWalker(object):
     """
@@ -30,7 +30,7 @@ class ContainerWalker(object):
             else:
                 sql.append(unicode(entity))
 
-        self._sql = self.separator.join(map(unicode, sql))
+        self._sql = self.separator.join(map(unicode, sql)).strip()
 
         return sql
 
@@ -76,10 +76,23 @@ class SelectContainer(EntityContainer):
 
         self.add(SQLEntity('SELECT'))
 
-        columns = EntityContainer(separator=',')
+        # add selected columns
+        columns  = EntityContainer(separator=',')
         for key, column in self.table._columns.items():
-            columns.add(column.sql_entities['select'])
+            columns.add(column.sql_entities['selection'])
 
         self.add(columns)
         self.add(SQLEntity('FROM'))
-        self.add(table._sql_entity)
+
+        # add selected tables
+        tables   = EntityContainer(separator=',')
+        tables.add(table._sql_entity)
+        self.add(tables)
+
+        # add joins
+        joins    = EntityContainer()
+        for foreign in self.table._foreigns:
+            joins.add(SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on']))
+            for key, column in foreign['table']._columns.items():
+                columns.add(column.sql_entities['selection'])
+        self.add(joins)

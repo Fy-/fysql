@@ -28,7 +28,9 @@ class SQLColumn(SQLEntity):
     def __init__(self, column_table, column_name, column_alias=False):
         if not column_alias:
             self._value = '{0}{1}{0}.{0}{2}{0}'.format(self.quote, column_table, column_name)
-
+        else:
+            self._value = '{0}{1}{0}.{0}{2}{0} AS {3}'.format(self.quote, column_table, column_name, column_alias)
+            
     def __unicode__(self):
         return self._value
 
@@ -41,3 +43,10 @@ class SQLTable(SQLEntity):
     def __init__(self, name, table_alias=False):
         if not table_alias:
             super(SQLTable, self).__init__(name)
+
+class SQLJoin(SQLEntity):
+    """
+        SQLJoin: represents a sql join
+    """
+    def __init__(self, join, table, left_on, right_on):
+        self._value = '{0} JOIN {1} ON {2}={3}'.format(join, table, left_on, right_on)
