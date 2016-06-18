@@ -68,6 +68,14 @@ class EntityContainer(object):
         return self._walker
 
 class EntityExecutableContainer(EntityContainer):
+    _instances = {}
+
+    def __new__(cls, *args, **kwargs):
+        key = cls.__name__ + args[0].__name__
+        if not cls._instances.has_key(key):
+            EntityExecutableContainer._instances[key] = super(EntityContainer, cls).__new__(cls, *args, **kwargs)
+        return EntityExecutableContainer._instances[key]
+
     def __init__(self, table):
         super(EntityExecutableContainer, self).__init__()
         self.table = table
