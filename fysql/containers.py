@@ -73,7 +73,7 @@ class EntityExecutableContainer(EntityContainer):
     def __new__(cls, *args, **kwargs):
         key = cls.__name__ + args[0].__name__
         if not cls._instances.has_key(key):
-            EntityExecutableContainer._instances[key] = super(EntityContainer, cls).__new__(cls, *args, **kwargs)
+            EntityExecutableContainer._instances[key] = super(EntityExecutableContainer, cls).__new__(cls, *args, **kwargs)
         return EntityExecutableContainer._instances[key]
 
     def __init__(self, table):
