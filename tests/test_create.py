@@ -14,7 +14,7 @@ class Post(Table):
     db = 'no_db'
 
     title   = CharColumn(default='Post title')
-    id_user = FKeyColumn(table=User, reference='users')
+    id_user = FKeyColumn(table=User, reference='user')
 
 class TestCreate(unittest.TestCase):
     def test_create(self):

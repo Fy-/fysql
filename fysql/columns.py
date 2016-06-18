@@ -6,6 +6,8 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
+import json
+
 from .entities import SQLColumn, SQLCondition, SQLQuotedEntity
 from .exceptions import FysqlException
 
@@ -23,8 +25,15 @@ class Column(object):
         self.default      = default
         self.sql_column   = sql_column
         self.description  = description
-        self._data        = None
         self.sql_entities = False
+
+    def __get__(self, instance, type=None):
+        if instance is not None:
+            return instance._data.get('{0}_{1}'.format(self.table._db_table, self.name))
+        return self
+
+    def __set__(self, instance, value):
+        instance._data['{0}_{1}'.format(self.table._db_table, self.name)] = value
 
     def bind(self, table, name):
         self.table  = table
@@ -38,18 +47,17 @@ class Column(object):
         if self.index:
             self.sql_entities['index'] = SQLQuotedEntity('{0}_index'.format(self.sql_column))
 
-    def _dict(self, value):
-        pass
-
     def _json(self, value):
-        pass
+        return json.dumps(self._dict(value))
+
+    def _dict(self, value):
+        return value
 
     def escape(self, value):
         if isinstance(value, list):
             return map(self._escape, value)
         else:
             return self._escape(unicode(value))
-
 
     def _condition(operator):
         """
@@ -98,7 +106,32 @@ class Column(object):
         else:
             return unicode(self.__str__())
 
-class VirtualColumn(object):pass
+class VirtualColumn(object):
+    """
+        Represents an other Table as a Column
+    """
+    def __init__(self, table, name):
+        self.table    = table
+        self.name     = name
+
+    def __get__(self, instance, type=None):
+        if instance is not None:
+            key = '{0}_{1}'.format(self.table._db_table, self.name)
+            if not instance._data.get(key):
+                instance._data[key] = self.table()
+                for k, data in instance._data.items():
+                    if self.name == k.split('_')[0] and key != k:
+                        instance._data[key]._data[k] = data
+                        del instance._data[k]
+
+                return instance._data[key]
+            else:
+                return instance._data.get(key)
+        return self
+
+    def __set__(self, instance, value):
+        key = '{0}_{1}'.format(self.table._db_table, self.name)
+        instance._data[key] = value
 
 class CharColumn(Column):
     sql_type = 'varchar'
@@ -155,5 +188,6 @@ class FKeyColumn(BigIntegerColumn):
         self.table._add_foreign(self.relation_table, self.sql_entities['condition'], self.link.sql_entities['condition'])
 
         # add a virtual column for results
-        setattr(self.table, self.reference, VirtualColumn())
+        # @todo: alias to external columns with alias = reference
+        setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference))
 

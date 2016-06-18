@@ -7,6 +7,7 @@
 """
 from __future__ import unicode_literals
 import hashlib
+
 from .entities import SQLEntity, SQLJoin, SQLCondition
 from .columns import FKeyColumn, PKeyColumn
 
@@ -56,6 +57,34 @@ class ContainerWalker(object):
     @staticmethod
     def _sql_entity(value):
         return '{0}{1}'.format(unicode(value))
+
+class ResultContainer(object):
+    def __init__(self, table, cursor):
+        self.table  = table
+        self.cursor = cursor
+        self.sql2py = {}
+        self.result = []
+
+        for i in range(len(self.cursor.description)):
+           self.sql2py[i] = self.cursor.description[i][0]
+
+        self.parse()
+
+    def parse(self):
+        # @todo: allow fetchone (memory issue)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            self.parse_row(row)
+
+        self.cursor.close()
+
+    def parse_row(self, row):
+        item = self.table()
+
+        for k, f in self.sql2py.items():
+            item._data[f] = row[k]
+
+        self.result.append(item)
 
 class EntityContainer(object):
     """
@@ -233,3 +262,7 @@ class SelectContainer(EntityExecutableContainer):
     def limit(self, limit, position=0):
         self += SQLEntity('LIMIT {0},{1}'.format(position, limit))
         return self
+
+    def execute(self):
+        cursor = self.table._database.execute(self.sql)
+        return ResultContainer(self.table, cursor).result

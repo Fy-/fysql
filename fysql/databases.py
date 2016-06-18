@@ -7,13 +7,13 @@
 """
 from __future__ import unicode_literals
 from warnings import filterwarnings
-from .exceptions import FysqlException
-
 try:
     import MySQLdb as mysql
     filterwarnings('ignore', category = mysql.Warning)
 except ImportError:
     mysql = None
+
+from .exceptions import FysqlException
 
 class Database(object): 
     def __init__(self, database, **kwargs):

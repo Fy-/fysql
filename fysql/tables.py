@@ -7,8 +7,9 @@
 """
 from __future__ import unicode_literals
 from collections import OrderedDict
+import json
 
-from .columns import Column, PKeyColumn
+from .columns import Column, PKeyColumn, FKeyColumn
 from .entities import SQLTable
 from .containers import SelectContainer, CreateContainer, DropContainer
 from .exceptions import FysqlException
@@ -53,6 +54,7 @@ class TableWatcher(type):
             cls._columns    = OrderedDict()
             cls._defaults   = OrderedDict()
             cls._backrefs   = OrderedDict()
+            cls._for_tables = OrderedDict()
             cls._foreigns   = []
             cls._database   = db
 
@@ -84,6 +86,9 @@ class Table(object):
         Table: Python class who represents a SQL table
     """
     __metaclass__ = TableWatcher
+
+    def __init__(self):
+        self._data = OrderedDict()
 
     @classmethod
     def select(cls):
@@ -117,3 +122,22 @@ class Table(object):
     @classmethod
     def _add_foreign(cls, table, left_on, right_on):
         cls._foreigns.append({'table': table, 'left_on':unicode(left_on), 'right_on':unicode(right_on)})
+        cls._for_tables[table._db_table] = table
+
+    def _dict(self):
+        d = OrderedDict()
+        for key, column in self._columns.items():
+            d[key] = column._dict(getattr(self, key))
+            if isinstance(column, FKeyColumn):
+                d[column.reference] = getattr(self, column.reference)._dict()
+
+        return d
+
+    def _json(self, indent=None):
+        return json.dumps(self._dict(), indent=indent, sort_keys=False)
+
+    def __str__(self):
+        return self._json(indent=2)
+        
+    def __repr__(self):
+        return self._json()

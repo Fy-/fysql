@@ -12,7 +12,7 @@ class Post(Table):
     db = 'no_db'
 
     title   = CharColumn()
-    id_user = FKeyColumn(table=User, reference='users')
+    id_user = FKeyColumn(table=User, reference='user')
 
 class TestWhere(unittest.TestCase):
     def test_where(self):
