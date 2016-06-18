@@ -90,5 +90,6 @@ ENV/
 
 # fysql
 _test.py
+_timeit.py
 docs/_build
 cleanpyc.sh

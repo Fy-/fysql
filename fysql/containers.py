@@ -6,6 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
+import hashlib
 from .entities import SQLEntity, SQLJoin, SQLCondition
 from .columns import FKeyColumn, PKeyColumn
 
@@ -14,7 +15,18 @@ class ContainerWalker(object):
         ContainerWalker: walk through a list of SQLEntity and EntityContainer
         Convert this list to a sql query. (self.sql)
     """
-    def __init__(self, entities, separator, *args, **kwargs):
+    _instances = {}
+
+    def __new__(cls, *args, **kwargs):
+        if not args[2]:
+            return super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
+            
+        key = hashlib.md5(str(args[0])).hexdigest()
+        if not ContainerWalker._instances.has_key(key):
+            ContainerWalker._instances[key] = super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
+        return ContainerWalker._instances[key]
+
+    def __init__(self, entities, separator, executable, *args, **kwargs):
         self._sql = False
         self.entities  = entities
         self.separator = separator
@@ -49,6 +61,14 @@ class EntityContainer(object):
     """
         Contain a list of SQLEntity and Entity containers
     """
+    def __new__(cls, *args, **kwargs):
+        if args:
+            cls.executable = True
+        else:
+            cls.executable = False
+
+        return super(EntityContainer, cls).__new__(cls, *args, **kwargs)
+
     def __init__(self, separator=' '):
         self._walker    = False
         self.entities   = []
@@ -64,10 +84,14 @@ class EntityContainer(object):
     @property
     def walker(self):
         if not self._walker:
-            self._walker = ContainerWalker(self.entities, self.separator)
+            self._walker = ContainerWalker(self.entities, self.separator, self.executable)
         return self._walker
 
 class EntityExecutableContainer(EntityContainer):
+    """
+        Contain a list of SQLEntity and Entity containers
+        This list can be converted to an SQL query using ContainerWalker
+    """
     _instances = {}
 
     def __new__(cls, *args, **kwargs):
