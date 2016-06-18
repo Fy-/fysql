@@ -3,13 +3,13 @@ import unittest
 from fysql import *
 
 class User(Table):
-    db = Database()
+    db = 'no_db'
     
     firstname = CharColumn()
     lastname  = CharColumn()
 
 class Post(Table):
-    db = Database()
+    db = 'no_db'
 
     title   = CharColumn()
     id_user = FKeyColumn(table=User, reference='users')

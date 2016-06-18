@@ -10,4 +10,4 @@ __version__ = '0.1-dev'
 
 from .tables import Table
 from .columns import *
-from .databases import *
+from .databases import MySQLDatabase

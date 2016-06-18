@@ -20,7 +20,7 @@ class ContainerWalker(object):
     def __new__(cls, *args, **kwargs):
         if not args[2]:
             return super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
-            
+
         key = hashlib.md5(str(args[0])).hexdigest()
         if not ContainerWalker._instances.has_key(key):
             ContainerWalker._instances[key] = super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
@@ -108,6 +108,10 @@ class EntityExecutableContainer(EntityContainer):
     def sql(self):
         return self.walker.sql
 
+    def execute(self):
+       self.table._database.execute(self.sql)
+    
+
 class DropContainer(EntityExecutableContainer):
     """
         Contain a list representing a DROP query
@@ -115,6 +119,7 @@ class DropContainer(EntityExecutableContainer):
     def __init__(self, table):
         super(DropContainer, self).__init__(table)
         self += SQLEntity('DROP TABLE IF EXISTS {0};'.format(self.table._sql_entity))
+        self.execute()
 
 
 class CreateContainer(EntityExecutableContainer):
@@ -165,6 +170,12 @@ class CreateContainer(EntityExecutableContainer):
         self += args_create
 
         self += SQLEntity(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;')
+
+        self.execute()
+        
+    def execute(self):
+        DropContainer(self.table)
+        self.table._database.execute(self.sql)
 
 class SelectContainer(EntityExecutableContainer):
     """

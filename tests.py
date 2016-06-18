@@ -4,5 +4,7 @@ from tests.test_select import *
 from tests.test_where  import *
 from tests.test_create import *
 
+from tests.test_db_create import *
+
 if __name__ == '__main__':
     unittest.main(argv=sys.argv)
