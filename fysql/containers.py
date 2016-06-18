@@ -6,7 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
-from .entities import SQLEntity, SQLJoin
+from .entities import SQLEntity, SQLJoin, SQLCondition
 
 class ContainerWalker(object):
     """
@@ -53,8 +53,12 @@ class EntityContainer(object):
         self.entities   = []
         self.separator  = separator
 
-    def add(self, entity):
+    def __add__(self, entity):
         self.entities.append(entity) 
+        return self
+
+    def __len__(self):
+        return len(self.entities)
 
     @property
     def walker(self):
@@ -74,25 +78,48 @@ class SelectContainer(EntityContainer):
         super(SelectContainer, self).__init__()
         self.table = table
 
-        self.add(SQLEntity('SELECT'))
-
         # add selected columns
-        columns  = EntityContainer(separator=',')
+        columns = EntityContainer(separator=',')
         for key, column in self.table._columns.items():
-            columns.add(column.sql_entities['selection'])
-
-        self.add(columns)
-        self.add(SQLEntity('FROM'))
+            columns += column.sql_entities['selection']
 
         # add selected tables
-        tables   = EntityContainer(separator=',')
-        tables.add(table._sql_entity)
-        self.add(tables)
-
+        tables = EntityContainer(separator=',')
+        tables += table._sql_entity
+        
         # add joins
         joins    = EntityContainer()
         for foreign in self.table._foreigns:
-            joins.add(SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on']))
+            joins += SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on'])
             for key, column in foreign['table']._columns.items():
-                columns.add(column.sql_entities['selection'])
-        self.add(joins)
+                columns += column.sql_entities['selection']
+
+        self += SQLEntity('SELECT')
+        self += columns
+        self += SQLEntity('FROM')
+        self += tables
+        
+        if len(joins) != 0:
+            self += joins
+
+    def where(self, *conditions):
+        self += SQLEntity('WHERE')
+
+        size = len(conditions)-1
+        i    = 0
+
+        if size == 0:
+            self += conditions[0]
+        else:
+            for condition in conditions:
+                if isinstance(condition, SQLCondition):
+                    self += SQLEntity('(')
+                    self += condition
+                    self += SQLEntity(')')
+
+                    if i < size:
+                        self += SQLEntity('AND')
+                    
+                i += 1
+
+        return self

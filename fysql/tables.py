@@ -89,6 +89,10 @@ class Table(object):
     def select(cls):
         return SelectContainer(cls) 
 
+    @classmethod
+    def where(cls, *conditions):
+        return SelectContainer(cls).where(*conditions)
+
     # Helpers
     @classmethod
     def _add_column(cls, key, column):
