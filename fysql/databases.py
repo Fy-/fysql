@@ -33,8 +33,8 @@ class Database(object):
 
     def create_all(self):
         for key, table in self._tables.items():
-            table.drop_db()
-            table.create_db()
+            table.drop_table()
+            table.create_table()
 
     def close(self):
         if not self.closed:

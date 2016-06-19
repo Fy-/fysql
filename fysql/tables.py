@@ -116,11 +116,11 @@ class Table(object):
         return InsertContainer(cls, **kwargs).execute()
 
     @classmethod
-    def create_db(cls):
+    def create_table(cls):
         return CreateContainer(cls)
 
     @classmethod
-    def drop_db(cls):
+    def drop_table(cls):
         return DropContainer(cls)
 
     # Helpers
