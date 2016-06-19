@@ -14,7 +14,7 @@ from .columns import FKeyColumn, PKeyColumn
 class ContainerWalker(object):
     """
         ContainerWalker: walk through a list of SQLEntity and EntityContainer
-        Convert this list to a sql query. (self.sql)
+        Convert this list to a sql query --> self.sql
     """
     _instances = {}
 
@@ -59,6 +59,9 @@ class ContainerWalker(object):
         return '{0}{1}'.format(unicode(value))
 
 class ResultContainer(object):
+    """
+        Assign sql select datas to Table._data
+    """
     def __init__(self, table, cursor):
         self.table  = table
         self.cursor = cursor
@@ -71,7 +74,7 @@ class ResultContainer(object):
         self.parse()
 
     def parse(self):
-        # @todo: allow fetchone (memory issue)
+        # @todo: allow fetchone (memory issue?)
         rows = self.cursor.fetchall()
         for row in rows:
             self.parse_row(row)
@@ -88,7 +91,7 @@ class ResultContainer(object):
 
 class EntityContainer(object):
     """
-        Contain a list of SQLEntity and Entity containers
+        self.entities -> List of SQLEntity and Entity containers
     """
     def __new__(cls, *args, **kwargs):
         if args:
@@ -118,7 +121,7 @@ class EntityContainer(object):
 
 class EntityExecutableContainer(EntityContainer):
     """
-        Contain a list of SQLEntity and Entity containers
+        self.entities -> list of SQLEntity and Entity containers
         This list can be converted to an SQL query using ContainerWalker
     """
 
@@ -131,7 +134,7 @@ class EntityExecutableContainer(EntityContainer):
             EntityExecutableContainer._instances[key] = super(EntityExecutableContainer, cls).__new__(cls, *args, **kwargs)
         return EntityExecutableContainer._instances[key]
     """
-    
+
     def __init__(self, table):
         super(EntityExecutableContainer, self).__init__()
         self.table = table
@@ -146,7 +149,7 @@ class EntityExecutableContainer(EntityContainer):
 
 class DropContainer(EntityExecutableContainer):
     """
-        Contain a list representing a DROP query
+       self.entities -> list representing a DROP query
     """
     def __init__(self, table):
         super(DropContainer, self).__init__(table)
@@ -156,7 +159,7 @@ class DropContainer(EntityExecutableContainer):
 
 class CreateContainer(EntityExecutableContainer):
     """
-        Contain a list representing a CREATE query
+        self.entities -> list representing a CREATE query
     """
     def __init__(self, table):
         super(CreateContainer, self).__init__(table)
@@ -214,7 +217,7 @@ class CreateContainer(EntityExecutableContainer):
 
 class InsertContainer(EntityExecutableContainer):
     """
-        Contain a list representing an Insert query
+        self.entities -> list representing an Insert query
     """
     def __init__(self, table, **kwargs):
         super(InsertContainer, self).__init__(table)
@@ -246,7 +249,7 @@ class InsertContainer(EntityExecutableContainer):
 
 class SelectContainer(EntityExecutableContainer):
     """
-        Contain a list representing a SELECT query
+        self.entities -> list representing a SELECT query
     """
     def __init__(self, table):
         super(SelectContainer, self).__init__(table)

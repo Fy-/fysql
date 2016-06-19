@@ -13,7 +13,7 @@ from .exceptions import FysqlException
 
 class Column(object):
     """
-        Column: Python class who represents a SQL column.
+        Column: epresents a SQL column on a Table.
     """
     column = True
 
@@ -190,6 +190,5 @@ class FKeyColumn(BigIntegerColumn):
         self.table._add_foreign(self.relation_table, self.sql_entities['condition'], self.link.sql_entities['condition'])
 
         # add a virtual column for results
-        # @todo: alias to external columns with alias = reference
-        setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference))
+        setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference)) # @todo: alias to external columns with alias = reference
 

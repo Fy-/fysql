@@ -41,7 +41,7 @@ class TableWatcher(type):
                     if key == 'db':
                         db = attr
 
-            # Get db in herited
+            # Get db if herited
             if bases[0].__name__ != 'Table':
                 if bases[0].__dict__.has_key('db'):
                     db = bases[0].__dict__['db']
@@ -123,7 +123,9 @@ class Table(object):
     def drop_table(cls):
         return DropContainer(cls)
 
-    # Helpers
+    """
+        Helpers
+    """
     @classmethod
     def _add_column(cls, key, column):
         cls._columns[key] = column
@@ -137,6 +139,10 @@ class Table(object):
         cls._foreigns.append({'table': table, 'left_on':unicode(left_on), 'right_on':unicode(right_on)})
         cls._for_tables[table._db_table] = table
 
+
+    """
+        JSON & Dict
+    """
     def _dict(self):
         d = OrderedDict()
         for key, column in self._columns.items():
