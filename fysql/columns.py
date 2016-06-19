@@ -176,9 +176,11 @@ class PKeyColumn(BigIntegerColumn):
 
 class FKeyColumn(BigIntegerColumn):
     def __init__(self, table, reference, link=False, **kwargs):
+        kwargs['index'] = True
         self.reference = reference
         self.relation_table = table
         self.link = link if link else self.relation_table._columns['id']
+
         super(FKeyColumn, self).__init__(**kwargs)
 
     def bind(self, table, name):

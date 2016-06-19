@@ -9,12 +9,11 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 import json
 
+from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
 from .entities import SQLTable
-from .containers import SelectContainer, CreateContainer, DropContainer
+from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer
 from .exceptions import FysqlException
-
-tables = OrderedDict()
 
 class TableWatcher(type):
     """
@@ -26,12 +25,14 @@ class TableWatcher(type):
             db_table = False
             db       = False
             pkey     = False
+            virtual  = True
 
             # Add fields and static properties
             for key, attr in clsdict.items():
                 if isinstance(attr, Column):
                     if attr.pkey == False:
                         columns.append((key, attr))
+                        virtual = False
                     else:
                         pkey = attr
                 else:
@@ -73,11 +74,12 @@ class TableWatcher(type):
                 if column.default:
                     cls._set_default(key, column.default) # save default value
 
-            # add table to tables.
-            if tables.has_key(cls._name):
-                del tables[cls._name]
+            # add table to database.
+            if isinstance(cls._database, Database) and not virtual:
+                if cls._database._tables.has_key(cls._name):
+                    del cls._database._tables[cls._name]
 
-            tables[cls._name] = cls
+                cls._database._tables[cls._name] = cls
 
         super(TableWatcher, cls).__init__(name, bases, clsdict)
 
@@ -103,11 +105,22 @@ class Table(object):
         return SelectContainer(cls).limit(limit, position)
 
     @classmethod
-    def create(cls):
+    def get(cls, *conditions):
+        try:
+            return SelectContainer(cls).where(*conditions).limit(1).execute()[0]
+        except IndexError:
+            return False
+
+    @classmethod
+    def create(cls, **kwargs):
+        return InsertContainer(cls, **kwargs).execute()
+
+    @classmethod
+    def create_db(cls):
         return CreateContainer(cls)
 
     @classmethod
-    def drop(cls):
+    def drop_db(cls):
         return DropContainer(cls)
 
     # Helpers

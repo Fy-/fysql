@@ -6,6 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
+from collections import OrderedDict
 from warnings import filterwarnings
 try:
     import MySQLdb as mysql
@@ -21,6 +22,7 @@ class Database(object):
         self.closed      = True
         self._connection = False
         self.database    = database
+        self._tables     = OrderedDict()
 
     @property
     def connection(self):
@@ -28,6 +30,11 @@ class Database(object):
             self._connection = self._connect(self.database, **self.conn_kwargs)
             self.closed = False
         return self._connection
+
+    def create_all(self):
+        for key, table in self._tables.items():
+            table.drop_db()
+            table.create_db()
 
     def close(self):
         if not self.closed:

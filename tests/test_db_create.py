@@ -16,8 +16,8 @@ class Post(DevTables):
 
 class TestCreate(unittest.TestCase):
     def test_create_drop(self):
-        User.create()
-        Post.create()
+        User.create_db()
+        Post.create_db()
         d = DevTables._database.get_tables()
         r = '[u\'post\', u\'user\']'
 

@@ -188,6 +188,9 @@ class CreateContainer(EntityExecutableContainer):
             if column.default:
                 column_create += SQLEntity('DEFAULT {0}'.format(column.escape(column.default)))
 
+            if column.pkey:
+                column_create += SQLEntity('AUTO_INCREMENT')
+
             args_create += column_create
 
             if column.index:
@@ -206,6 +209,38 @@ class CreateContainer(EntityExecutableContainer):
         DropContainer(self.table)
         self.table._database.execute(self.sql)
 
+class InsertContainer(EntityExecutableContainer):
+    """
+        Contain a list representing an Insert query
+    """
+    def __init__(self, table, **kwargs):
+        super(InsertContainer, self).__init__(table)
+        self += SQLEntity('INSERT INTO')
+        self += self.table._sql_entity
+        self += SQLEntity('(')
+
+        columns_names  = EntityContainer(separator=',')
+        columns_values = EntityContainer(separator=',') 
+        for attr, value in kwargs.items():
+            if self.table._columns.has_key(attr):
+                columns_names  += self.table._columns[attr].sql_entities['name']
+                columns_values += self.table._columns[attr].escape(value)
+
+        self += columns_names
+        self += SQLEntity(')')
+        self += SQLEntity('VALUES (')
+        self += columns_values
+        self += SQLEntity(');')
+
+
+    def execute(self):
+        cursor  = self.table._database.execute(self.sql)
+        item_id = self.table._database.connection.insert_id()
+        self.table._database.commit()
+
+        return self.table.get(self.table.id==item_id)
+
+
 class SelectContainer(EntityExecutableContainer):
     """
         Contain a list representing a SELECT query
@@ -220,7 +255,7 @@ class SelectContainer(EntityExecutableContainer):
 
         # add selected tables
         tables = EntityContainer(separator=',')
-        tables += table._sql_entity
+        tables += self.table._sql_entity
         
         # add joins
         joins    = EntityContainer()
@@ -239,7 +274,7 @@ class SelectContainer(EntityExecutableContainer):
 
     def where(self, *conditions):
         self += SQLEntity('WHERE')
-
+       
         size = len(conditions)-1
         i    = 0
 
