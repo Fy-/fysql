@@ -121,6 +121,8 @@ class EntityExecutableContainer(EntityContainer):
         Contain a list of SQLEntity and Entity containers
         This list can be converted to an SQL query using ContainerWalker
     """
+
+    """
     _instances = {}
 
     def __new__(cls, *args, **kwargs):
@@ -128,7 +130,8 @@ class EntityExecutableContainer(EntityContainer):
         if not cls._instances.has_key(key):
             EntityExecutableContainer._instances[key] = super(EntityExecutableContainer, cls).__new__(cls, *args, **kwargs)
         return EntityExecutableContainer._instances[key]
-
+    """
+    
     def __init__(self, table):
         super(EntityExecutableContainer, self).__init__()
         self.table = table

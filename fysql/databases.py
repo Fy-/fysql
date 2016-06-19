@@ -35,7 +35,10 @@ class Database(object):
         for key, table in self._tables.items():
             table.drop_table()
             table.create_table()
-            
+    
+    def connect(self):
+        return self.connection
+        
     def close(self):
         if not self.closed:
             self._close(self.connection)
