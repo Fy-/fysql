@@ -27,16 +27,16 @@ Have fun
     # or 
     user = User.get(User.id==1)
 
->>> print user
-{"id": 1, "lastname": "SQL", "role": "Admin", "firstname": "Fy"}
+    >>> print user
+    {"id": 1, "lastname": "SQL", "role": "Admin", "firstname": "Fy"}
 
 .. code-block:: python
 
     user.role = 'Member'
     user.save() 
 
->>> print user
-{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}
+    >>> print user
+    {"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}
 
 .. code-block:: python
 
@@ -47,12 +47,12 @@ Have fun
     users = User.where((User.id==1) | (User.lastname=='Bon')).result
 
 
->>> print users
-[{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}, {"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
+    >>> print users
+    [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}, {"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
 
 .. code-block:: python
 
     count_users = User.count().where(User.role <<< ['Member', 'Admin'])
 
->>> print count_users
-3
+    >>> print count_users
+    3
