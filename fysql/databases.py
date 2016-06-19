@@ -38,7 +38,7 @@ class Database(object):
     
     def connect(self):
         return self.connection
-        
+
     def close(self):
         if not self.closed:
             self._close(self.connection)

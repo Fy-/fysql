@@ -191,4 +191,3 @@ class FKeyColumn(BigIntegerColumn):
 
         # add a virtual column for results
         setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference)) # @todo: alias to external columns with alias = reference
-

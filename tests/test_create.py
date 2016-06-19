@@ -19,14 +19,14 @@ class Post(Table):
 class TestCreate(unittest.TestCase):
     def test_create(self):
         d = User.create_table().sql
-        r = 'CREATE TABLE IF NOT EXISTS `user` ( `id` bigint(20) UNSIGNED NOT NULL, `lastname` varchar(255) NOT NULL, `role` varchar(190) NOT NULL, `firstname` varchar(255) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX `role_index` (`role`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+        r = 'CREATE TABLE IF NOT EXISTS `user` ( `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, `lastname` varchar(255) NOT NULL, `role` varchar(190) NOT NULL, `firstname` varchar(255) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX `role_index` (`role`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
 
         self.assertEqual(d, r)
 
     def test_create_fkey(self):
         d = Post.create_table().sql
-        r = 'CREATE TABLE IF NOT EXISTS `post` ( `id` bigint(20) UNSIGNED NOT NULL, `id_user` bigint(20) UNSIGNED NOT NULL, `title` varchar(255) NOT NULL DEFAULT \'Post title\', PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
-        
+        r = 'CREATE TABLE IF NOT EXISTS `post` ( `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, `id_user` bigint(20) UNSIGNED NOT NULL, `title` varchar(255) NOT NULL DEFAULT \'Post title\', PRIMARY KEY (`id`),  INDEX `id_user_index` (`id_user`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;'
+
         self.assertEqual(d, r)
 
     def test_drop(self):

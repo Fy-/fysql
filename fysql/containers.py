@@ -143,8 +143,10 @@ class EntityExecutableContainer(EntityContainer):
     def sql(self):
         return self.walker.sql
 
-    def execute(self):
-       self.table._database.execute(self.sql)
+    def execute(self, commit=False):
+        if isinstance(self.table._database, str):
+            return False
+        return self.table._database.execute(self.sql, commit=commit)
     
 
 class DropContainer(EntityExecutableContainer):
@@ -209,11 +211,8 @@ class CreateContainer(EntityExecutableContainer):
 
         self += SQLEntity(') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;')
 
-        self.execute()
-        
-    def execute(self):
         DropContainer(self.table)
-        self.table._database.execute(self.sql)
+        self.execute()
 
 class InsertContainer(EntityExecutableContainer):
     """
@@ -246,38 +245,60 @@ class InsertContainer(EntityExecutableContainer):
 
         return self.table.get(self.table.id==item_id)
 
-
-class SelectContainer(EntityExecutableContainer):
+class SaveContainer(EntityExecutableContainer):
     """
-        self.entities -> list representing a SELECT query
+        self.entities -> list representing an Insert query
     """
-    def __init__(self, table):
-        super(SelectContainer, self).__init__(table)
+    def __init__(self, table, instance):
+        super(SaveContainer, self).__init__(table)
+        self += SQLEntity('UPDATE')
+        self += self.table._sql_entity
+        self += SQLEntity('SET')
 
-        # add selected columns
         columns = EntityContainer(separator=',')
+        to_update = []
         for key, column in self.table._columns.items():
-            columns += column.sql_entities['selection']
+            columns += SQLEntity('{0}={1}'.format(
+                column, 
+                column.escape(getattr(instance, key))
+                )
+            )
+            if isinstance(column, FKeyColumn):
+                to_update.append(getattr(instance, column.reference))
 
-        # add selected tables
-        tables = EntityContainer(separator=',')
-        tables += self.table._sql_entity
-        
-        # add joins
-        joins    = EntityContainer()
-        for foreign in self.table._foreigns:
-            joins += SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on'])
-            for key, column in foreign['table']._columns.items():
-                columns += column.sql_entities['selection']
 
-        self += SQLEntity('SELECT')
+
         self += columns
-        self += SQLEntity('FROM')
-        self += tables
-        
-        if len(joins) != 0:
-            self += joins
+        self += SQLEntity('WHERE {0}={1} LIMIT 1'.format(
+            self.table._pkey, 
+            getattr(instance, self.table._pkey.name)
+        ))
+        self.execute(commit=True)
 
+        for item in to_update:
+            item.save()
+
+class RemoveContainer(EntityExecutableContainer):
+    """
+        self.entities -> list representing an Insert query
+    """   
+    def __init__(self, table, instance):
+        super(RemoveContainer, self).__init__(table)
+        self += SQLEntity('DELETE FROM')
+        self += self.table._sql_entity
+        self += SQLEntity('WHERE {0}={1} LIMIT 1'.format(
+            self.table._pkey, 
+            getattr(instance, self.table._pkey.name)
+        ))
+
+        self.execute(commit=True)
+
+
+
+class ConditionableExecutableContainer(EntityExecutableContainer):
+    """
+        Conditionable query, with where, limit, group, having...
+    """   
     def where(self, *conditions):
         self += SQLEntity('WHERE')
        
@@ -304,6 +325,50 @@ class SelectContainer(EntityExecutableContainer):
         self += SQLEntity('LIMIT {0},{1}'.format(position, limit))
         return self
 
+class SelectContainer(ConditionableExecutableContainer):
+    """
+        self.entities -> list representing a SELECT query
+    """
+    def __init__(self, table, count=False):
+        super(SelectContainer, self).__init__(table)
+        self.count = count
+
+        # add selected columns
+        columns = EntityContainer(separator=',')
+        for key, column in self.table._columns.items():
+            columns += column.sql_entities['selection']
+
+        # add selected tables
+        tables = EntityContainer(separator=',')
+        tables += self.table._sql_entity
+        
+        # add joins
+        joins    = EntityContainer()
+        for foreign in self.table._foreigns:
+            joins += SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on'])
+            for key, column in foreign['table']._columns.items():
+                columns += column.sql_entities['selection']
+
+        self += SQLEntity('SELECT')
+        if self.count:
+            self += SQLEntity('COUNT(*)')
+        else:
+            self += columns
+        self += SQLEntity('FROM')
+        self += tables
+        
+        if len(joins) != 0:
+            self += joins
+
     def execute(self):
         cursor = self.table._database.execute(self.sql)
+
+        if self.count:
+            return cursor.fetchone()[0]
+
         return ResultContainer(self.table, cursor).result
+
+    @property
+    def result(self):
+        return self.execute()
+    

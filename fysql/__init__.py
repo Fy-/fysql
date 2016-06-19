@@ -11,4 +11,3 @@ __version__ = '0.1-dev'
 from .tables import Table
 from .columns import PKeyColumn, FKeyColumn, CharColumn, IntegerColumn, TinyIntegerColumn, SmallIntegerColumn, BigIntegerColumn
 from .databases import MySQLDatabase
-

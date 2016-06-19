@@ -12,7 +12,7 @@ import json
 from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
 from .entities import SQLTable
-from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer
+from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer, SaveContainer, RemoveContainer
 from .exceptions import FysqlException
 
 class TableWatcher(type):
@@ -91,6 +91,20 @@ class Table(object):
 
     def __init__(self):
         self._data = OrderedDict()
+
+    def remove(self):
+        return RemoveContainer(self.__class__, self)
+
+    def save(self):
+        return SaveContainer(self.__class__, self)
+
+    @classmethod
+    def count(cls):
+        return SelectContainer(cls, count=True)
+
+    @classmethod
+    def count_all(cls):
+        return SelectContainer(cls, count=True).execute()
 
     @classmethod
     def select(cls):
