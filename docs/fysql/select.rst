@@ -48,6 +48,7 @@ Custom Selection
 You can do custom select on your tables, it will also return a python *list* of :py:class:`Table` instances with only the selected values.
 
 .. code-block:: python
+
    >>> print User.select(User.id, User.lastname).where(User.lastname=='Bon').all()
    [{"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
 
