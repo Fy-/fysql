@@ -104,6 +104,9 @@ class Column(object):
         else:
             return unicode(self.__str__())
 
+    def __hash__(self):
+        return hash('{0}_{1}'.format(self.table._name, self.sql_column))
+
 class VirtualColumn(object):
     """Represents an other Table as a Column"""
     def __init__(self, table, name):
@@ -183,7 +186,7 @@ class FKeyColumn(BigIntegerColumn):
         super(FKeyColumn, self).bind(table, name)
         
         # add foreign column in table
-        self.table._add_foreign(self.relation_table, self.sql_entities['condition'], self.link.sql_entities['condition'])
+        self.table._add_foreign(self)
 
         # add a virtual column for results
         setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference)) # @todo: alias to external columns with alias = reference

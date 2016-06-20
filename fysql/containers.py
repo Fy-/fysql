@@ -6,10 +6,20 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
+from functools import wraps
 import hashlib
 
 from .entities import SQLEntity, SQLJoin, SQLCondition
 from .columns import FKeyColumn, PKeyColumn
+
+def _generative(func):
+    """Chainable method"""
+    @wraps(func)
+    def decorator(self, *args, **kwargs):
+        func(self, *args, **kwargs)
+        # return self.__class__(*args, **kwargs)
+        return self
+    return decorator
 
 class ContainerWalker(object):
     """ContainerWalker: walk through a list of SQLEntity and EntityContainer.
@@ -272,10 +282,9 @@ class RemoveContainer(EntityExecutableContainer):
 
         self.execute(commit=True)
 
-
-
 class ConditionableExecutableContainer(EntityExecutableContainer):
-    """Conditionable query, with where, limit, group, having..."""   
+    """Conditionable query, with where, limit, group, having..."""  
+    @_generative
     def where(self, *conditions):
         self += SQLEntity('WHERE')
        
@@ -296,22 +305,26 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
                     
                 i += 1
 
-        return self
-
     def limit(self, limit, position=0):
         self += SQLEntity('LIMIT {0},{1}'.format(position, limit))
-        return self
+        return self.execute()
+
+    def all(self):
+        return self.execute()
 
 class SelectContainer(ConditionableExecutableContainer):
     """SELECT SQL Query."""
-    def __init__(self, table, count=False):
+    def __init__(self, table, *args, **kwargs):
         super(SelectContainer, self).__init__(table)
-        self.count = count
+        self.count      = kwargs.get('count') or False
+        self.selected   = []
 
         # add selected columns
         columns = EntityContainer(separator=',')
-        for key, column in self.table._columns.items():
+        for column in self.table._columns.values() if not args else args:
             columns += column.sql_entities['selection']
+            self.selected.append(hash(column))
+
 
         # add selected tables
         tables = EntityContainer(separator=',')
@@ -320,15 +333,18 @@ class SelectContainer(ConditionableExecutableContainer):
         # add joins
         joins    = EntityContainer()
         for foreign in self.table._foreigns:
-            joins += SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on'])
-            for key, column in foreign['table']._columns.items():
-                columns += column.sql_entities['selection']
+            if hash(foreign['column']) in self.selected:
+                joins += SQLJoin('INNER', foreign['table']._sql_entity, foreign['left_on'], foreign['right_on'])
+                for key, column in foreign['table']._columns.items():
+                    columns += column.sql_entities['selection']
 
         self += SQLEntity('SELECT')
+
         if self.count:
             self += SQLEntity('COUNT(*)')
         else:
             self += columns
+
         self += SQLEntity('FROM')
         self += tables
         
@@ -342,8 +358,3 @@ class SelectContainer(ConditionableExecutableContainer):
             return cursor.fetchone()[0]
 
         return ResultContainer(self.table, cursor).result
-
-    @property
-    def result(self):
-        return self.execute()
-    

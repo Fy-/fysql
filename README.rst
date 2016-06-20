@@ -60,7 +60,7 @@ Adding new users and selecting members.
 
     >>> User.create(firstname='Jean', lastname='Bon', role='Member')
     >>> User.create(firstname='Jean', lastname='Rhume', role='Admin')
-    >>> users = User.where(User.role=='Member').result
+    >>> users = User.filter(User.role=='Member').all()
     >>> print users
     [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}, {"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
 
@@ -69,7 +69,7 @@ Counting users.
 
 .. code-block:: python
 
-    >>> count_users = User.count().where(User.role <<< ['Member', 'Admin'])
+    >>> count_users = User.count_filter(User.role <<< ['Member', 'Admin'])
     >>> print count_users
     3
 

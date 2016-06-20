@@ -95,19 +95,23 @@ class Table(object):
         return SaveContainer(self.__class__, self)
 
     @classmethod
-    def count(cls):
-        return SelectContainer(cls, count=True)
+    def count_filter(cls, *conditions):
+        return SelectContainer(cls, count=True).where(*conditions).all()
 
     @classmethod
-    def count_all(cls):
+    def count(cls):
         return SelectContainer(cls, count=True).execute()
 
     @classmethod
-    def select(cls):
-        return SelectContainer(cls) 
+    def select(cls, *args):
+        return SelectContainer(cls, *args) 
 
     @classmethod
-    def where(cls, *conditions):
+    def all(cls):
+        return SelectContainer(cls).all()
+
+    @classmethod
+    def filter(cls, *conditions):
         return SelectContainer(cls).where(*conditions)
 
     @classmethod
@@ -117,7 +121,7 @@ class Table(object):
     @classmethod
     def get(cls, *conditions):
         try:
-            return SelectContainer(cls).where(*conditions).limit(1).execute()[0]
+            return SelectContainer(cls).where(*conditions).limit(1)[0]
         except IndexError:
             return False
 
@@ -143,10 +147,14 @@ class Table(object):
         cls._defaults[key] = value
 
     @classmethod
-    def _add_foreign(cls, table, left_on, right_on):
-        cls._foreigns.append({'table': table, 'left_on':unicode(left_on), 'right_on':unicode(right_on)})
-        cls._for_tables[table._db_table] = table
-
+    def _add_foreign(cls, column):
+        cls._foreigns.append({
+            'table': column.relation_table, 
+            'column': column,
+            'left_on':unicode(column.sql_entities['condition']), 
+            'right_on':unicode(column.link.sql_entities['condition'])
+        })
+        cls._for_tables[column.relation_table._db_table] = column.relation_table
 
     def _dict(self):
         d = OrderedDict()

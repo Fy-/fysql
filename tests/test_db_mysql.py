@@ -40,7 +40,7 @@ class TestMySQL(unittest.TestCase):
         Post.create(title='Mon super post 2', id_user=user2.id)
         Post.create(title='Mon super post 3', id_user=user1.id)
 
-        d = str(User.select().result) + str (Post.select().result)
+        d = str(User.select().all()) + str (Post.select().all())
         r = '[{"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, {"id": 2, "lastname": "Bon", "role": "Noob", "firstname": "Jean"}][{"id": 1, "id_user": 1, "user": {"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, "title": "Mon super post 1"}, {"id": 2, "id_user": 2, "user": {"id": 2, "lastname": "Bon", "role": "Noob", "firstname": "Jean"}, "title": "Mon super post 2"}, {"id": 3, "id_user": 1, "user": {"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, "title": "Mon super post 3"}]'
 
         self.assertEqual(d, r)
@@ -57,17 +57,28 @@ class TestMySQL(unittest.TestCase):
         self.assertEqual(d, r)
 
     def test5_count_all(self):
-        d = Post.count_all()
+        d = Post.count()
         r = 3
 
         self.assertEqual(d, r)
 
-    def test6_count_where(self):
-        d = Post.count().where(User.id==1).result
+    def test6_count_filter(self):
+        d = Post.count_filter(User.id==1)
         r = 2
         self.assertEqual(d, r)
 
-    def test7_remove(self):
+    def test7_where(self):
+        d = User.select(User.id, User.lastname).where(User.lastname=='Haha!').all()
+        r = '[{"id": 1, "lastname": "Haha!", "role": null, "firstname": null}]'
+
+        self.assertEqual(repr(d), r)
+
+    def test8_filter(self):
+        d = User.filter(User.lastname=='Haha!').all()
+        r = '[{"id": 1, "lastname": "Haha!", "role": "Admin", "firstname": "Florian"}]'
+        self.assertEqual(repr(d), r)
+
+    def test9_remove(self):
         post = Post.get(Post.id==3)
         post.remove()
 
