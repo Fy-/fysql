@@ -12,9 +12,9 @@ from .entities import SQLEntity, SQLJoin, SQLCondition
 from .columns import FKeyColumn, PKeyColumn
 
 class ContainerWalker(object):
-    """
-        ContainerWalker: walk through a list of SQLEntity and EntityContainer
-        Convert this list to a sql query --> self.sql
+    """ContainerWalker: walk through a list of SQLEntity and EntityContainer.
+    Attributes:
+        _sql (unicode): description of the SQL query filled by the walker.
     """
     _instances = {}
 
@@ -59,9 +59,7 @@ class ContainerWalker(object):
         return '{0}{1}'.format(unicode(value))
 
 class ResultContainer(object):
-    """
-        Assign sql select datas to Table._data
-    """
+    """Assign sql select datas to Table._data"""
     def __init__(self, table, cursor):
         self.table  = table
         self.cursor = cursor
@@ -74,7 +72,10 @@ class ResultContainer(object):
         self.parse()
 
     def parse(self):
-        # @todo: allow fetchone (memory issue?)
+        """Parse rows
+        Todo:
+            * Allow cursor.fetchone()? (memory issue)
+        """
         rows = self.cursor.fetchall()
         for row in rows:
             self.parse_row(row)
@@ -90,8 +91,10 @@ class ResultContainer(object):
         self.result.append(item)
 
 class EntityContainer(object):
-    """
-        self.entities -> List of SQLEntity and Entity containers
+    """List of SQLEntity
+        Attributes:
+            entities (list) SQLEntity and EntityContainer
+            seperator (str) Separator for each element of entities
     """
     def __new__(cls, *args, **kwargs):
         if args:
@@ -120,21 +123,7 @@ class EntityContainer(object):
         return self._walker
 
 class EntityExecutableContainer(EntityContainer):
-    """
-        self.entities -> list of SQLEntity and Entity containers
-        This list can be converted to an SQL query using ContainerWalker
-    """
-
-    """
-    _instances = {}
-
-    def __new__(cls, *args, **kwargs):
-        key = cls.__name__ + args[0].__name__
-        if not cls._instances.has_key(key):
-            EntityExecutableContainer._instances[key] = super(EntityExecutableContainer, cls).__new__(cls, *args, **kwargs)
-        return EntityExecutableContainer._instances[key]
-    """
-
+    """List of SQLEntity that can be converted to an executable SQL query."""
     def __init__(self, table):
         super(EntityExecutableContainer, self).__init__()
         self.table = table
@@ -150,9 +139,7 @@ class EntityExecutableContainer(EntityContainer):
     
 
 class DropContainer(EntityExecutableContainer):
-    """
-       self.entities -> list representing a DROP query
-    """
+    """DROP TABLE SQL query."""
     def __init__(self, table):
         super(DropContainer, self).__init__(table)
         self += SQLEntity('DROP TABLE IF EXISTS {0};'.format(self.table._sql_entity))
@@ -160,9 +147,7 @@ class DropContainer(EntityExecutableContainer):
 
 
 class CreateContainer(EntityExecutableContainer):
-    """
-        self.entities -> list representing a CREATE query
-    """
+    """CREATE TABLE SQL query."""
     def __init__(self, table):
         super(CreateContainer, self).__init__(table)
 
@@ -215,9 +200,7 @@ class CreateContainer(EntityExecutableContainer):
         self.execute()
 
 class InsertContainer(EntityExecutableContainer):
-    """
-        self.entities -> list representing an Insert query
-    """
+    """INSERT INTO SQL query. Used for Table.create()"""
     def __init__(self, table, **kwargs):
         super(InsertContainer, self).__init__(table)
         self += SQLEntity('INSERT INTO')
@@ -246,9 +229,7 @@ class InsertContainer(EntityExecutableContainer):
         return self.table.get(self.table.id==item_id)
 
 class SaveContainer(EntityExecutableContainer):
-    """
-        self.entities -> list representing an Insert query
-    """
+    """UPDATE SQL Query. Used for TableInstance.save()"""
     def __init__(self, table, instance):
         super(SaveContainer, self).__init__(table)
         self += SQLEntity('UPDATE')
@@ -279,9 +260,7 @@ class SaveContainer(EntityExecutableContainer):
             item.save()
 
 class RemoveContainer(EntityExecutableContainer):
-    """
-        self.entities -> list representing an Insert query
-    """   
+    """DELETE SQL Query. Used for TableInstance.remove()"""   
     def __init__(self, table, instance):
         super(RemoveContainer, self).__init__(table)
         self += SQLEntity('DELETE FROM')
@@ -296,9 +275,7 @@ class RemoveContainer(EntityExecutableContainer):
 
 
 class ConditionableExecutableContainer(EntityExecutableContainer):
-    """
-        Conditionable query, with where, limit, group, having...
-    """   
+    """Conditionable query, with where, limit, group, having..."""   
     def where(self, *conditions):
         self += SQLEntity('WHERE')
        
@@ -326,9 +303,7 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
         return self
 
 class SelectContainer(ConditionableExecutableContainer):
-    """
-        self.entities -> list representing a SELECT query
-    """
+    """SELECT SQL Query."""
     def __init__(self, table, count=False):
         super(SelectContainer, self).__init__(table)
         self.count = count

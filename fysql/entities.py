@@ -8,9 +8,7 @@
 from __future__ import unicode_literals
 
 class SQLEntity(object):
-    """
-        SQLEntity: basic sql entity 
-    """
+    """Basic SQL Entity."""
     quote     = ''
 
     def __init__(self, name):
@@ -20,12 +18,11 @@ class SQLEntity(object):
         return self._value
 
 class SQLQuotedEntity(SQLEntity):
+    """Basic SQL escaped with `."""
     quote = '`'
 
 class SQLColumn(SQLQuotedEntity):
-    """
-        SQLColumn: represents a column in a table
-    """
+    """SQLEntity of a SQL column"""
     def __init__(self, column_name, column_table = False, column_alias=False):
         if not column_table:
             name = '{0}{1}{0}'.format(self.quote, column_name)
@@ -41,24 +38,18 @@ class SQLColumn(SQLQuotedEntity):
         return self._value
 
 class SQLTable(SQLQuotedEntity): 
-    """
-        SQLColumn: represents a table in a database
-    """
+    """SQLEntity of a SQL table."""
     def __init__(self, name, table_alias=False):
         if not table_alias:
             super(SQLTable, self).__init__(name)
 
 class SQLJoin(SQLEntity):
-    """
-        SQLJoin: represents a sql join
-    """
+    """SQLEntity of a SQL JOIN."""
     def __init__(self, join, table, left, right):
         self._value = '{0} JOIN {1} ON {2}={3}'.format(join, table, left, right)
 
 class SQLCondition(SQLEntity):
-    """
-        SQLCondition: represents a SQL condition
-    """
+    """SQLEntity of a SQL Condition."""
     def __init__(self, left, operator, right):
         escape = False
 

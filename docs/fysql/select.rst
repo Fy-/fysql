@@ -25,7 +25,7 @@ Selecting a single record
 
 Filtering records
 -----------------
-On :py:meth:`Table.select` and :py:meth:`Table.count` ``limit()`` and/or ``where()`` with :ref:`fysql operators <operators>`.
+On :py:meth:`Table.select` and :py:meth:`Table.count` you can use ``limit()`` and/or ``where()`` with :ref:`fysql operators <operators>`.
 
 .. code-block:: python
 

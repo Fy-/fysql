@@ -16,9 +16,7 @@ from .containers import SelectContainer, CreateContainer, DropContainer, InsertC
 from .exceptions import FysqlException
 
 class TableWatcher(type):
-    """
-        TableWatcher: Watch declaration of subclasses of Table and initialize the data
-    """
+    """Watch declaration of subclasses of Table and initialize the data"""
     def __init__(cls, name, bases, clsdict):
         if len(cls.mro()) > 2 and cls.__name__ != 'Table':
             columns  = []
@@ -84,9 +82,7 @@ class TableWatcher(type):
         super(TableWatcher, cls).__init__(name, bases, clsdict)
 
 class Table(object):
-    """
-        Table: Python class who represents a SQL table
-    """
+    """Python class who represents a SQL table"""
     __metaclass__ = TableWatcher
 
     def __init__(self):
@@ -137,9 +133,7 @@ class Table(object):
     def drop_table(cls):
         return DropContainer(cls)
 
-    """
-        Helpers
-    """
+
     @classmethod
     def _add_column(cls, key, column):
         cls._columns[key] = column
@@ -154,9 +148,6 @@ class Table(object):
         cls._for_tables[table._db_table] = table
 
 
-    """
-        JSON & Dict
-    """
     def _dict(self):
         d = OrderedDict()
         for key, column in self._columns.items():

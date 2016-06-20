@@ -12,9 +12,7 @@ from .entities import SQLColumn, SQLCondition, SQLQuotedEntity
 from .exceptions import FysqlException
 
 class Column(object):
-    """
-        Column: epresents a SQL column on a Table.
-    """
+    """Represents a SQL column on a Table."""
     column = True
 
     def __init__(self, pkey=False, unique=False, index=False, null=False, default=False, sql_column=False, description=False):
@@ -60,9 +58,9 @@ class Column(object):
             return self._escape(unicode(value))
 
     def _condition(operator):
-        """
-            Lightweight factory which returns a method that builds an SQLCondition
-            from peewee: https://github.com/coleifer/peewee/blob/master/peewee.py#L508-L517
+        """Lightweight factory which returns a method that builds an SQLCondition.
+        From peewee: 
+            https://github.com/coleifer/peewee/blob/master/peewee.py#L508-L517
         """
         def inner(self, other):
             if other is None and operator == '=':
@@ -107,9 +105,7 @@ class Column(object):
             return unicode(self.__str__())
 
 class VirtualColumn(object):
-    """
-        Represents an other Table as a Column
-    """
+    """Represents an other Table as a Column"""
     def __init__(self, table, name):
         self.table    = table
         self.name     = name
