@@ -35,10 +35,10 @@ On :py:meth:`Table.select` and :py:meth:`Table.count` you can use ``limit()`` an
     >>> User.where((User.id == 2) | (User.id==1)).result
     [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}, {"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
 
-    >>> Users.where(User.id << [1,2]))
+    >>> Users.where(User.id << [1,2])
     [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}, {"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
 
-    >>> Users.where(User.id << [1,2])).limit(1).result
+    >>> Users.where(User.id << [1,2]).limit(1).result
     [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}]
 
     >>> posts = Post.where(User.firstname.contains('Je')).result
