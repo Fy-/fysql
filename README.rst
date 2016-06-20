@@ -3,7 +3,7 @@ fysql
 
 Still in developpement
 
-fysql is a small ORM inpired by  `peewee <https://github.com/coleifer/peewee>`_.
+fysql is a small python ORM inpired by  `peewee <https://github.com/coleifer/peewee>`_.
 
 
 Have fun
