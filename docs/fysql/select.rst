@@ -50,7 +50,10 @@ You can do custom select on your tables, it will also return a python *list* of 
 .. code-block:: python
 
    >>> print User.select(User.id, User.lastname).where(User.lastname=='Bon').all()
-   [{"id": 2, "lastname": "Bon", "role": "Member", "firstname": "Jean"}]
+   [{"id": 2, "lastname": "Bon", "role": null, "firstname": null}]
 
    >>> print User.select(User.id, User.lastname).where(User.lastname << ['Bon', 'SQL']).limit(1)
-   [{"id": 1, "lastname": "SQL", "role": "Member", "firstname": "Fy"}]
+   [{"id": 1, "lastname": "SQL", "role": null, "firstname": null}]
+
+.. note::
+    You can't use ``save()`` on incomplete instances (readonly if use of ``select(*args)``)

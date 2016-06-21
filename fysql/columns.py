@@ -6,16 +6,23 @@
     :license: MIT, see LICENSE for more details.
 """
 from __future__ import unicode_literals
-import json
+import json, cPickle
 
 from .entities import SQLColumn, SQLCondition, SQLQuotedEntity
 from .exceptions import FysqlException
+from .utils import format_date_time
 
 class Column(object):
     """Represents a SQL column on a Table."""
-    column = True
+    quoted   = False
+    sql_type = None
+    sql_type_size = None
 
-    def __init__(self, pkey=False, unique=False, index=False, null=False, default=False, sql_column=False, description=False):
+    def __init__(
+        self, pkey=False, unique=False, index=False, null=False, 
+        default=False, sql_column=False, description=False, 
+        setter=False, getter=False
+    ):
         self.pkey         = pkey
         self.unique       = unique
         self.index        = index
@@ -24,6 +31,8 @@ class Column(object):
         self.sql_column   = sql_column
         self.description  = description
         self.sql_entities = False
+        self.setter       = setter
+        self.getter       = getter
 
     def __get__(self, instance, type=None):
         if instance is not None:
@@ -31,6 +40,8 @@ class Column(object):
         return self
 
     def __set__(self, instance, value):
+        if self.setter:
+            value = self.setter(value)
         instance._data['{0}_{1}'.format(self.table._db_table, self.name)] = value
 
     def bind(self, table, name):
@@ -46,16 +57,24 @@ class Column(object):
             self.sql_entities['index'] = SQLQuotedEntity('{0}_index'.format(self.sql_column))
 
     def _json(self, value):
-        return json.dumps(self._dict(value))
+        return self.escape(value, no_quote=True)
 
-    def _dict(self, value):
-        return value
-
-    def escape(self, value):
+    def escape(self, value, no_quote=False):
         if isinstance(value, list):
-            return map(self._escape, value)
+            values = map(self._escape, value)
+            if self.quoted:
+                for value in values:
+                    value = '\'{0}\''.format(self.table._database.escape_string(value))
+
+            return values
         else:
-            return self._escape(unicode(value))
+            if hasattr(value, '__call__'):
+                value = value()
+
+            if self.quoted and not isinstance(value, Column) and no_quote == False:
+                return '\'{0}\''.format(self.table._database.escape_string(self._escape(value)))
+
+            return self._escape(value)
 
     def _condition(operator):
         """Lightweight factory which returns a method that builds an SQLCondition.
@@ -122,7 +141,8 @@ class VirtualColumn(object):
                     if self.name == k.split('_')[0] and key != k:
                         instance._data[key]._data[k] = data
                         del instance._data[k]
-
+                        
+                instance.__load__()
                 return instance._data[key]
             else:
                 return instance._data.get(key)
@@ -132,8 +152,11 @@ class VirtualColumn(object):
         key = '{0}_{1}'.format(self.table._db_table, self.name)
         instance._data[key] = value
 
+
+
 class CharColumn(Column):
     sql_type = 'varchar'
+    quoted   = True
 
     def __init__(self, max_length=255, **kwargs):
         super(CharColumn, self).__init__(**kwargs)
@@ -147,18 +170,54 @@ class CharColumn(Column):
     def _escape(self, value):
         # @todo: to_unicode, escape_string
         value = value
-        return '\'{0}\''.format(value)
+        return value
+
+class TextColumn(Column):
+    sql_type = 'text'
+    quoted   = True
+
+    def _escape(self, value):
+        # @todo: to_unicode, escape_string
+        value = value
+        return value
+
+class DictColumn(TextColumn):
+    def _escape(self, value):
+        if value == None:
+            return cPickle.dumps({})
+        return cPickle.dumps(value)
+
+    def _py(self, value):
+        if value:
+            return cPickle.loads(str(value))
+        else: 
+            return {}
+
+    def _json(self, value):
+        try:
+            return json.dumps(value)
+        except:
+            return 'DictColumn: not JSON serializable'
 
 class IntegerColumn(Column):
     sql_type = 'int'
     sql_type_size = 11
 
     def _escape(self, value):
-        return unicode(int(value))
+        return int(value)
+
+class FloatColumn(Column):
+    sql_type = 'float'
+
+    def _escape(self, value):
+        return float(value)
 
 class TinyIntegerColumn(IntegerColumn):
     sql_type = 'tinyint'
     sql_type_size = 4
+
+class BooleanColumn(TinyIntegerColumn): 
+    db_size  = 1
 
 class SmallIntegerColumn(IntegerColumn):
     sql_type = 'smallint'
@@ -167,6 +226,29 @@ class SmallIntegerColumn(IntegerColumn):
 class BigIntegerColumn(IntegerColumn):
     sql_type = 'bigint'
     sql_type_size = 20
+
+class DateTimeColumn(Column):
+    sql_type    = 'datetime'
+    sql_format  = '%Y-%m-%d %H:%M:%S'
+    quoted      = True
+
+    def __init__(self, sql_format=None, **kwargs):
+        super(DateTimeColumn, self).__init__(**kwargs)
+        self.sql_format = sql_format if sql_format else self.sql_format
+
+    def _escape(self, value):
+        return format_date_time(value, self.sql_format)
+
+    def _json(self, value):
+        return format_date_time(value, self.sql_format)
+        
+class DateColumn(DateTimeColumn):
+    sql_type    = 'date'
+    sql_format  = '%Y-%m-%d'
+
+class TimeColumn(DateTimeColumn):
+    sql_type    = 'time'
+    sql_format  = '%H:%M:%S'
 
 class PKeyColumn(BigIntegerColumn):
     def __init__(self, **kwargs):

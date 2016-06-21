@@ -16,7 +16,7 @@ from .containers import SelectContainer, CreateContainer, DropContainer, InsertC
 from .exceptions import FysqlException
 
 class TableWatcher(type):
-    """Watch declaration of subclasses of Table and initialize the data"""
+    """Watch declaration of subclasses of Table and initialize the data"""    
     def __init__(cls, name, bases, clsdict):
         if len(cls.mro()) > 2 and cls.__name__ != 'Table':
             columns  = []
@@ -64,7 +64,6 @@ class TableWatcher(type):
                 setattr(cls, 'id', pkey)
 
             cls._pkey = pkey
-
             for key, column in columns:
                 column.bind(cls, key) # bind each column to the table.
                 cls._add_column(key, column) # save column to table class.
@@ -87,6 +86,9 @@ class Table(object):
 
     def __init__(self):
         self._data = OrderedDict()
+
+    def __load__(self):
+        pass
 
     def remove(self):
         return RemoveContainer(self.__class__, self)
@@ -120,10 +122,7 @@ class Table(object):
 
     @classmethod
     def get(cls, *conditions):
-        try:
-            return SelectContainer(cls).where(*conditions).limit(1)[0]
-        except IndexError:
-            return False
+        return SelectContainer(cls).where(*conditions).one()
 
     @classmethod
     def create(cls, **kwargs):
@@ -159,17 +158,20 @@ class Table(object):
     def _dict(self):
         d = OrderedDict()
         for key, column in self._columns.items():
-            d[key] = column._dict(getattr(self, key))
+            d[key] = getattr(self, key)
             if isinstance(column, FKeyColumn):
-                d[column.reference] = getattr(self, column.reference)._dict()
+                d[column.reference] = getattr(self, column.reference)
 
         return d
 
     def _json(self, indent=None):
-        return json.dumps(self._dict(), indent=indent, sort_keys=False)
+        d = OrderedDict()
+        for key, column in self._columns.items():
+            d[key] = column._json(getattr(self, key))
+            if isinstance(column, FKeyColumn):
+                d[column.reference] = getattr(self, column.reference)._dict()
 
-    def __str__(self):
-        return self._json(indent=2)
-        
+        return json.dumps(d, indent=indent, sort_keys=False)
+
     def __repr__(self):
         return self._json()

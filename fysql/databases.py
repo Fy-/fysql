@@ -41,7 +41,7 @@ class Database(object):
 
     def close(self):
         if not self.closed:
-            self._close(self.connection)
+            self._close()
             self.closed = True
 
     def _connect(self, database, **kwargs):
@@ -67,7 +67,11 @@ class Database(object):
 
     def execute(self, sql, commit=False):
         cursor = self.get_cursor()
-        cursor.execute(sql)
+        try:
+            cursor.execute(sql)
+        except:
+            print sql
+
         if commit:
             self.commit()
 

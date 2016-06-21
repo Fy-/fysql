@@ -62,13 +62,12 @@ class SQLCondition(SQLEntity):
             right = unicode(right)
         else:
             if isinstance(right, list):
-                right = '({0})'.format(','.join(map(left.escape, right)))
+                right = '({0})'.format(','.join(map(unicode, map(left.escape, right))))
             elif not hasattr(right, 'column'):
-                right = left.escape(right)
+                right = unicode(left.escape(right))
                 
             if not escape and hasattr(right, 'column'):
-                left = right.escape(left)
-
+                left = unicode(right.escape(left))
 
         self._value = '{0} {1} {2}'.format(unicode(left), operator, unicode(right))
 

@@ -89,7 +89,9 @@ ENV/
 .ropeproject
 
 # fysql
+__init__.py
 _test.py
+_test_fypress.py
 _timeit.py
 docs/_build
 cleanpyc.sh

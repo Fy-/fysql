@@ -96,8 +96,16 @@ class ResultContainer(object):
         item = self.table()
 
         for k, f in self.sql2py.items():
-            item._data[f] = row[k]
+            tables    = self.table._database._tables
+            id_table  = f.split('_')[0]
+            id_column = f.split('_', 1)[1]
 
+            if '_py' in dir(tables[id_table]._columns[id_column]):
+                item._data[f] = tables[id_table]._columns[id_column]._py(row[k])
+            else:
+                item._data[f] = row[k]
+                
+        item.__load__()
         self.result.append(item)
 
 class EntityContainer(object):
@@ -143,8 +151,6 @@ class EntityExecutableContainer(EntityContainer):
         return self.walker.sql
 
     def execute(self, commit=False):
-        if isinstance(self.table._database, str):
-            return False
         return self.table._database.execute(self.sql, commit=commit)
     
 
@@ -172,7 +178,7 @@ class CreateContainer(EntityExecutableContainer):
             column_create = EntityContainer(separator=' ')
             column_create += column.sql_entities['name']
             
-            if column.sql_type_size:
+            if column.sql_type_size != None:
                 column_create += SQLEntity('{0}({1})'.format(column.sql_type, column.sql_type_size))
             else:
                 column_create += SQLEntity(column.sql_type)
@@ -188,8 +194,8 @@ class CreateContainer(EntityExecutableContainer):
             else:
                 column_create += SQLEntity('NULL')
 
-            if column.default:
-                column_create += SQLEntity('DEFAULT {0}'.format(column.escape(column.default)))
+            #if column.default:
+            #    column_create += SQLEntity('DEFAULT {0}'.format(column.escape(column.default)))
 
             if column.pkey:
                 column_create += SQLEntity('AUTO_INCREMENT')
@@ -213,6 +219,7 @@ class InsertContainer(EntityExecutableContainer):
     """INSERT INTO SQL query. Used for Table.create()"""
     def __init__(self, table, **kwargs):
         super(InsertContainer, self).__init__(table)
+        self.filled = []
         self += SQLEntity('INSERT INTO')
         self += self.table._sql_entity
         self += SQLEntity('(')
@@ -223,6 +230,12 @@ class InsertContainer(EntityExecutableContainer):
             if self.table._columns.has_key(attr):
                 columns_names  += self.table._columns[attr].sql_entities['name']
                 columns_values += self.table._columns[attr].escape(value)
+                self.filled.append(attr)
+
+        for key, column in self.table._defaults.items():
+            if key not in self.filled:
+                columns_names  += self.table._columns[key].sql_entities['name']
+                columns_values += self.table._columns[key].escape(self.table._columns[key].default)
 
         self += columns_names
         self += SQLEntity(')')
@@ -264,6 +277,7 @@ class SaveContainer(EntityExecutableContainer):
             self.table._pkey, 
             getattr(instance, self.table._pkey.name)
         ))
+
         self.execute(commit=True)
 
         for item in to_update:
@@ -307,7 +321,14 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
 
     def limit(self, limit, position=0):
         self += SQLEntity('LIMIT {0},{1}'.format(position, limit))
+
+        if limit == 1:
+            return self.execute(unique=True)
+
         return self.execute()
+
+    def one(self):
+        return self.limit(1)
 
     def all(self):
         return self.execute()
@@ -351,10 +372,16 @@ class SelectContainer(ConditionableExecutableContainer):
         if len(joins) != 0:
             self += joins
 
-    def execute(self):
+    def execute(self, unique=False):
         cursor = self.table._database.execute(self.sql)
 
         if self.count:
             return cursor.fetchone()[0]
+
+        if unique:
+            try:
+                return ResultContainer(self.table, cursor).result[0]
+            except IndexError:
+                return False
 
         return ResultContainer(self.table, cursor).result
