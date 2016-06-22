@@ -16,4 +16,3 @@ from .columns import (
     TextColumn, FloatColumn, DictColumn, BooleanColumn
 )
 from .databases import MySQLDatabase
-from .ext import FlaskFySQL
