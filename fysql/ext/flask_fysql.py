@@ -1,12 +1,11 @@
-# Find the stack on which we want to store the database connection.
-# Starting with Flask 0.9, the _app_ctx_stack is the correct one,
-# before that we need to use the _request_ctx_stack.
+# -*- coding: utf-8 -*-
+from ..databases import MySQLDatabase
+
 try:
     from flask import _app_ctx_stack as stack
 except ImportError:
     from flask import _request_ctx_stack as stack
 
-from ..databases import MySQLDatabase
 
 class FySQL(object):
     engines = {
