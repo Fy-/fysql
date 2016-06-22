@@ -65,12 +65,12 @@ class Database(object):
     def rollback(self):
         self.connection.rollback()
 
+    def raw(self, sql, commit=False):
+        return self.execute(sql, commit)
+
     def execute(self, sql, commit=False):
         cursor = self.get_cursor()
-        try:
-            cursor.execute(sql)
-        except:
-            print sql
+        cursor.execute(sql)
 
         if commit:
             self.commit()

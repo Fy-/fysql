@@ -13,7 +13,7 @@ from .columns import (
     PKeyColumn, FKeyColumn, CharColumn, IntegerColumn, 
     TinyIntegerColumn, SmallIntegerColumn, BigIntegerColumn,
     DateTimeColumn, DateColumn, TimeColumn,
-    TextColumn, FloatColumn, DictColumn
+    TextColumn, FloatColumn, DictColumn, BooleanColumn
 )
 from .databases import MySQLDatabase
 from .ext import FlaskFySQL

@@ -41,7 +41,7 @@ class TestMySQL(unittest.TestCase):
         Post.create(title='Mon super post 3', id_user=user1.id)
 
         d = str(User.select().all()) + str (Post.select().all())
-        r = '[{"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, {"id": 2, "lastname": "Bon", "role": "Noob", "firstname": "Jean"}][{"id": 1, "id_user": 1, "user": {"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, "title": "Mon super post 1"}, {"id": 2, "id_user": 2, "user": {"id": 2, "lastname": "Bon", "role": "Noob", "firstname": "Jean"}, "title": "Mon super post 2"}, {"id": 3, "id_user": 1, "user": {"id": 1, "lastname": "Gasquez", "role": "Admin", "firstname": "Florian"}, "title": "Mon super post 3"}]'
+        r = '[<User id:1>, <User id:2>][<Post id:1>, <Post id:2>, <Post id:3>]'
 
         self.assertEqual(d, r)
 
@@ -51,8 +51,8 @@ class TestMySQL(unittest.TestCase):
         post.user.lastname = 'Haha!'
         post.save()
 
-        d = repr(post)
-        r = '{"id": 3, "id_user": 1, "user": {"id": 1, "lastname": "Haha!", "role": "Admin", "firstname": "Florian"}, "title": "Mon giga post 3"}'
+        d = post.user.lastname + post.title
+        r = 'Haha!Mon giga post 3'
 
         self.assertEqual(d, r)
 
@@ -68,14 +68,14 @@ class TestMySQL(unittest.TestCase):
         self.assertEqual(d, r)
 
     def test7_where(self):
-        d = User.select(User.id, User.lastname).where(User.lastname=='Haha!').all()
-        r = '[{"id": 1, "lastname": "Haha!", "role": null, "firstname": null}]'
+        d = User.select(User.id, User.lastname).where(User.lastname=='Haha!').one()._json()
+        r = '{"id": 1, "lastname": "Haha!", "role": null, "firstname": null}'
 
-        self.assertEqual(repr(d), r)
+        self.assertEqual(d, r)
 
     def test8_filter(self):
         d = User.filter(User.lastname=='Haha!').all()
-        r = '[{"id": 1, "lastname": "Haha!", "role": "Admin", "firstname": "Florian"}]'
+        r = '[<User id:1>]'
         self.assertEqual(repr(d), r)
 
     def test9_remove(self):

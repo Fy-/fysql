@@ -7,12 +7,12 @@
 """
 from __future__ import unicode_literals
 from collections import OrderedDict
-import json
+import json, copy
 
 from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
 from .entities import SQLTable
-from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer, SaveContainer, RemoveContainer
+from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer, SaveContainer, RemoveContainer, CreateTableContainer
 from .exceptions import FysqlException
 
 class TableWatcher(type):
@@ -20,19 +20,21 @@ class TableWatcher(type):
     def __init__(cls, name, bases, clsdict):
         if len(cls.mro()) > 2 and cls.__name__ != 'Table':
             columns  = []
-            db_table = False
-            db       = False
-            pkey     = False
-            virtual  = True
+            db_table  = False
+            db        = False
+            pkey      = False
+            virtual   = True
 
             # Add fields and static properties
             for key, attr in clsdict.items():
                 if isinstance(attr, Column):
-                    if attr.pkey == False:
-                        columns.append((key, attr))
-                        virtual = False
-                    else:
-                        pkey = attr
+                    columns.append((key, attr))
+                    if attr.pkey == True:
+                        pkey = True
+                        cls._pkey = attr
+                        cls._pkey_name = key
+
+                    virtual = False
                 else:
                     if key == 'db_table':
                         db_table = attr
@@ -58,12 +60,13 @@ class TableWatcher(type):
             cls._database   = db
 
             # Add a primary key named 'id' if no primary key
-            if pkey == False:
+            if not pkey:
                 pkey = PKeyColumn()
                 columns.insert(0, ('id', pkey))
                 setattr(cls, 'id', pkey)
+                cls._pkey = pkey
+                cls._pkey_name = 'id'
 
-            cls._pkey = pkey
             for key, column in columns:
                 column.bind(cls, key) # bind each column to the table.
                 cls._add_column(key, column) # save column to table class.
@@ -96,17 +99,20 @@ class Table(object):
     def save(self):
         return SaveContainer(self.__class__, self)
 
+    def insert(self):
+        return InsertContainer(self.__class__, self).execute()
+
     @classmethod
     def count_filter(cls, *conditions):
-        return SelectContainer(cls, count=True).where(*conditions).all()
+        return SelectContainer(cls, is_count=True).where(*conditions).all()
 
     @classmethod
     def count(cls):
-        return SelectContainer(cls, count=True).execute()
+        return SelectContainer(cls, is_count=True).execute()
 
     @classmethod
-    def select(cls, *args):
-        return SelectContainer(cls, *args) 
+    def select(cls, *args, **kwargs):
+        return SelectContainer(cls, *args, **kwargs) 
 
     @classmethod
     def all(cls):
@@ -126,11 +132,11 @@ class Table(object):
 
     @classmethod
     def create(cls, **kwargs):
-        return InsertContainer(cls, **kwargs).execute()
+        return CreateContainer(cls, **kwargs).execute()
 
     @classmethod
     def create_table(cls):
-        return CreateContainer(cls)
+        return CreateTableContainer(cls)
 
     @classmethod
     def drop_table(cls):
@@ -154,6 +160,7 @@ class Table(object):
             'right_on':unicode(column.link.sql_entities['condition'])
         })
         cls._for_tables[column.relation_table._db_table] = column.relation_table
+        cls._backrefs[column.reference] = column.relation_table._db_table
 
     def _dict(self):
         d = OrderedDict()
@@ -169,9 +176,14 @@ class Table(object):
         for key, column in self._columns.items():
             d[key] = column._json(getattr(self, key))
             if isinstance(column, FKeyColumn):
-                d[column.reference] = getattr(self, column.reference)._dict()
-
+                v = getattr(self, column.reference)
+                if v:
+                    d[column.reference] = getattr(self, column.reference)._json()
+                else:
+                    d[column.reference] = False
+                    
         return json.dumps(d, indent=indent, sort_keys=False)
 
+
     def __repr__(self):
-        return self._json()
+      return '<%s %s:%s>' % (self.__class__.__name__, self._pkey_name, getattr(self, self._pkey_name))

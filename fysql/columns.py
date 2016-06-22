@@ -33,6 +33,7 @@ class Column(object):
         self.sql_entities = False
         self.setter       = setter
         self.getter       = getter
+        self.filled       = False
 
     def __get__(self, instance, type=None):
         if instance is not None:
@@ -42,6 +43,7 @@ class Column(object):
     def __set__(self, instance, value):
         if self.setter:
             value = self.setter(value)
+        self.filled = True
         instance._data['{0}_{1}'.format(self.table._db_table, self.name)] = value
 
     def bind(self, table, name):
@@ -49,9 +51,9 @@ class Column(object):
         self.name   = name
         self.sql_column   = self.sql_column if self.sql_column else self.name
         self.sql_entities = { # SQL entities for Column
-            'name'     : SQLColumn(self.sql_column),
-            'condition': SQLColumn(self.sql_column, self.table._db_table),
-            'selection': SQLColumn(self.sql_column, self.table._db_table, '{0}_{1}'.format(self.table._db_table, self.sql_column))
+            'name'          : SQLColumn(self.sql_column),
+            'condition'     : SQLColumn(self.sql_column, self.table._db_table),
+            'selection'     : SQLColumn(self.sql_column, self.table._db_table, '{0}_{1}'.format(self.table._db_table, self.sql_column)),
         }
         if self.index:
             self.sql_entities['index'] = SQLQuotedEntity('{0}_index'.format(self.sql_column))
@@ -128,31 +130,46 @@ class Column(object):
 
 class VirtualColumn(object):
     """Represents an other Table as a Column"""
-    def __init__(self, table, name):
-        self.table    = table
-        self.name     = name
+    def __init__(self, table, relation_table, name):
+        self.table          = table
+        self.relation_table = relation_table
+        self.name           = name
 
     def __get__(self, instance, type=None):
         if instance is not None:
-            key = '{0}_{1}'.format(self.table._db_table, self.name)
+            key   = '{0}_{1}'.format(self.table._db_table, self.name)
             if not instance._data.get(key):
-                instance._data[key] = self.table()
+                instance._data[key] = self.relation_table()
+
+
                 for k, data in instance._data.items():
                     if self.name == k.split('_')[0] and key != k:
+                        tk = k
+                        k =  k.split('_')
+                        k[0] = self.table._backrefs[self.name]
+                        k = '_'.join(k)
+
                         instance._data[key]._data[k] = data
-                        del instance._data[k]
-                        
+                        del instance._data[tk]
+                        exist = True
+
+                if not getattr(instance._data[key], instance._pkey_name):
+                    return False
+
                 instance.__load__()
                 return instance._data[key]
             else:
                 return instance._data.get(key)
         return self
 
+    """
     def __set__(self, instance, value):
         key = '{0}_{1}'.format(self.table._db_table, self.name)
         instance._data[key] = value
+    """
 
-
+    def _dict(self):
+        return False
 
 class CharColumn(Column):
     sql_type = 'varchar'
@@ -204,13 +221,13 @@ class IntegerColumn(Column):
     sql_type_size = 11
 
     def _escape(self, value):
-        return int(value)
+        return int(value or 0)
 
 class FloatColumn(Column):
     sql_type = 'float'
 
     def _escape(self, value):
-        return float(value)
+        return float(value or 0.)
 
 class TinyIntegerColumn(IntegerColumn):
     sql_type = 'tinyint'
@@ -241,7 +258,7 @@ class DateTimeColumn(Column):
 
     def _json(self, value):
         return format_date_time(value, self.sql_format)
-        
+    
 class DateColumn(DateTimeColumn):
     sql_type    = 'date'
     sql_format  = '%Y-%m-%d'
@@ -256,9 +273,10 @@ class PKeyColumn(BigIntegerColumn):
         super(PKeyColumn, self).__init__(**kwargs)
 
 class FKeyColumn(BigIntegerColumn):
-    def __init__(self, table, reference, link=False, **kwargs):
+    def __init__(self, table, reference, link=False, required=True, **kwargs):
         kwargs['index'] = True
         self.reference = reference
+        self.required  = required
         self.relation_table = table
         self.link = link if link else self.relation_table._columns['id']
 
@@ -271,4 +289,5 @@ class FKeyColumn(BigIntegerColumn):
         self.table._add_foreign(self)
 
         # add a virtual column for results
-        setattr(self.table, self.reference, VirtualColumn(self.relation_table, self.reference)) # @todo: alias to external columns with alias = reference
+        vc = VirtualColumn(self.table, self.relation_table, self.reference)
+        setattr(self.table, self.reference, vc) # @todo: alias to external columns with alias = reference
