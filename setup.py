@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 setup(
   name='fysql',
@@ -9,16 +9,8 @@ setup(
   author_email='m@fy.to',
   description='fysql is a small ORM.',
   packages=['fysql'],
-  include_package_data=True,
   platforms='any',
   install_requires=[
     'MySQL-python>=1.2.5'
-  ],
-  classifiers=[
-      'Development Status :: 4 - Beta',
-      'Intended Audience :: Developers',
-      'License :: OSI Approved ::  MIT License',
-      'Operating System :: OS Independent',
-      'Programming Language :: Python'
-  ],
+  ]
 )
