@@ -403,7 +403,8 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
             self += SQLEntity(column)
         else:
             self += column
-
+            self += SQLEntity(order)
+            
     @_generative
     def group_by(self, group_by):
         if self._group == False:

@@ -6,7 +6,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
-__version__ = '0.1-dev'
+__version__ = '0.1'
 
 from .tables import Table
 from .columns import (
