@@ -10,7 +10,7 @@ __version__ = '0.1'
 
 from .tables import Table
 from .columns import (
-    PKeyColumn, FKeyColumn, CharColumn, IntegerColumn, 
+    PKeyColumn, FKeyColumn, CharColumn, IntegerColumn,
     TinyIntegerColumn, SmallIntegerColumn, BigIntegerColumn,
     DateTimeColumn, DateColumn, TimeColumn,
     TextColumn, FloatColumn, DictColumn, BooleanColumn

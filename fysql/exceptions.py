@@ -6,4 +6,6 @@
 """
 from __future__ import unicode_literals
 
-class FysqlException(Exception): pass
+
+class FysqlException(Exception):
+    pass

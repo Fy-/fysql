@@ -10,19 +10,21 @@ from collections import OrderedDict
 from warnings import filterwarnings
 try:
     import MySQLdb as mysql
-    filterwarnings('ignore', category = mysql.Warning)
+    filterwarnings('ignore', category=mysql.Warning)
 except ImportError:
     mysql = None
 
 from .exceptions import FysqlException
 
-class Database(object): 
+
+class Database(object):
+
     def __init__(self, database, **kwargs):
         self.conn_kwargs = kwargs
-        self.closed      = True
+        self.closed = True
         self._connection = False
-        self.database    = database
-        self._tables     = OrderedDict()
+        self.database = database
+        self._tables = OrderedDict()
 
     @property
     def connection(self):
@@ -35,7 +37,7 @@ class Database(object):
         for key, table in self._tables.items():
             table.drop_table()
             table.create_table()
-    
+
     def connect(self):
         return self.connection
 
@@ -77,7 +79,9 @@ class Database(object):
 
         return cursor
 
+
 class MySQLDatabase(Database):
+
     def _connect(self, database, **kwargs):
         if not mysql:
             raise FysqlException('MySQLdb must be installed.')

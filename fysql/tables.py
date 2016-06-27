@@ -7,7 +7,8 @@
 """
 from __future__ import unicode_literals
 from collections import OrderedDict
-import json, copy
+import json
+import copy
 
 from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
@@ -15,15 +16,16 @@ from .entities import SQLTable
 from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer, SaveContainer, RemoveContainer, CreateTableContainer
 from .exceptions import FysqlException
 
+
 class TableWatcher(type):
-    """Watch declaration of subclasses of Table and initialize the data"""    
+    """Watch declaration of subclasses of Table and initialize the data"""
     def __init__(cls, name, bases, clsdict):
         if len(cls.mro()) > 2 and cls.__name__ != 'Table':
-            columns  = []
-            db_table  = False
-            db        = False
-            pkey      = False
-            virtual   = True
+            columns = []
+            db_table = False
+            db = False
+            pkey = False
+            virtual = True
 
             # Add fields and static properties
             for key, attr in clsdict.items():
@@ -49,15 +51,15 @@ class TableWatcher(type):
             if db == False:
                 raise FysqlException('No database for {0} ({1})'.format(cls.__name__, cls))
 
-            cls._name       = cls.__name__.lower()
-            cls._db_table   = db_table if db_table else cls._name
+            cls._name = cls.__name__.lower()
+            cls._db_table = db_table if db_table else cls._name
             cls._sql_entity = SQLTable(cls._db_table)
-            cls._columns    = OrderedDict()
-            cls._defaults   = OrderedDict()
-            cls._backrefs   = OrderedDict()
+            cls._columns = OrderedDict()
+            cls._defaults = OrderedDict()
+            cls._backrefs = OrderedDict()
             cls._for_tables = OrderedDict()
-            cls._foreigns   = []
-            cls._database   = db
+            cls._foreigns = []
+            cls._database = db
 
             # Add a primary key named 'id' if no primary key
             if not pkey:
@@ -68,11 +70,11 @@ class TableWatcher(type):
                 cls._pkey_name = 'id'
 
             for key, column in columns:
-                column.bind(cls, key) # bind each column to the table.
-                cls._add_column(key, column) # save column to table class.
+                column.bind(cls, key)  # bind each column to the table.
+                cls._add_column(key, column)  # save column to table class.
 
                 if column.default:
-                    cls._set_default(key, column.default) # save default value
+                    cls._set_default(key, column.default)  # save default value
 
             # add table to database.
             if isinstance(cls._database, Database) and not virtual:
@@ -82,6 +84,7 @@ class TableWatcher(type):
                 cls._database._tables[cls._name] = cls
 
         super(TableWatcher, cls).__init__(name, bases, clsdict)
+
 
 class Table(object):
     """Python class who represents a SQL table"""
@@ -112,7 +115,7 @@ class Table(object):
 
     @classmethod
     def select(cls, *args, **kwargs):
-        return SelectContainer(cls, *args, **kwargs) 
+        return SelectContainer(cls, *args, **kwargs)
 
     @classmethod
     def all(cls):
@@ -142,7 +145,6 @@ class Table(object):
     def drop_table(cls):
         return DropContainer(cls)
 
-
     @classmethod
     def _add_column(cls, key, column):
         cls._columns[key] = column
@@ -154,10 +156,10 @@ class Table(object):
     @classmethod
     def _add_foreign(cls, column):
         cls._foreigns.append({
-            'table': column.relation_table, 
+            'table': column.relation_table,
             'column': column,
-            'left_on':unicode(column.sql_entities['condition']), 
-            'right_on':unicode(column.link.sql_entities['condition'])
+            'left_on': unicode(column.sql_entities['condition']),
+            'right_on': unicode(column.link.sql_entities['condition'])
         })
         cls._for_tables[column.relation_table._db_table] = column.relation_table
         cls._backrefs[column.reference] = column.relation_table._db_table
@@ -181,9 +183,8 @@ class Table(object):
                     d[column.reference] = getattr(self, column.reference)._json()
                 else:
                     d[column.reference] = False
-                    
+
         return json.dumps(d, indent=indent, sort_keys=False)
 
-
     def __repr__(self):
-      return '<%s %s:%s>' % (self.__class__.__name__, self._pkey_name, getattr(self, self._pkey_name))
+        return '<%s %s:%s>' % (self.__class__.__name__, self._pkey_name, getattr(self, self._pkey_name))

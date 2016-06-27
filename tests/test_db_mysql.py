@@ -2,21 +2,26 @@
 import unittest
 from fysql import *
 
-database =  MySQLDatabase('fysql', host='localhost', user='fysql', passwd='dev')
+database = MySQLDatabase('fysql', host='localhost', user='fysql', passwd='dev')
+
 
 class DevTables(Table):
     db = database
 
+
 class User(DevTables):
     firstname = CharColumn(max_length=150)
-    lastname  = CharColumn(max_length=150)
-    role      = CharColumn(index=True, unique=True)
+    lastname = CharColumn(max_length=150)
+    role = CharColumn(index=True, unique=True)
+
 
 class Post(DevTables):
-    title   = CharColumn(default='Post title', max_length=255)
+    title = CharColumn(default='Post title', max_length=255)
     id_user = FKeyColumn(table=User, reference='user')
 
+
 class TestMySQL(unittest.TestCase):
+
     def test1_create_drop(self):
         User.create_table()
         Post.create_table()
@@ -40,13 +45,13 @@ class TestMySQL(unittest.TestCase):
         Post.create(title='Mon super post 2', id_user=user2.id)
         Post.create(title='Mon super post 3', id_user=user1.id)
 
-        d = str(User.select().all()) + str (Post.select().all())
+        d = str(User.select().all()) + str(Post.select().all())
         r = '[<User id:1>, <User id:2>][<Post id:1>, <Post id:2>, <Post id:3>]'
 
         self.assertEqual(d, r)
 
     def test4_get_update(self):
-        post = Post.get(Post.id==3)
+        post = Post.get(Post.id == 3)
         post.title = 'Mon giga post 3'
         post.user.lastname = 'Haha!'
         post.save()
@@ -63,26 +68,26 @@ class TestMySQL(unittest.TestCase):
         self.assertEqual(d, r)
 
     def test6_count_filter(self):
-        d = Post.count_filter(User.id==1)
+        d = Post.count_filter(User.id == 1)
         r = 2
         self.assertEqual(d, r)
 
     def test7_where(self):
-        d = User.select(User.id, User.lastname).where(User.lastname=='Haha!').one()._json()
+        d = User.select(User.id, User.lastname).where(User.lastname == 'Haha!').one()._json()
         r = '{"id": 1, "lastname": "Haha!", "role": null, "firstname": null}'
 
         self.assertEqual(d, r)
 
     def test8_filter(self):
-        d = User.filter(User.lastname=='Haha!').all()
+        d = User.filter(User.lastname == 'Haha!').all()
         r = '[<User id:1>]'
         self.assertEqual(repr(d), r)
 
     def test9_remove(self):
-        post = Post.get(Post.id==3)
+        post = Post.get(Post.id == 3)
         post.remove()
 
-        d = Post.get(Post.id==3)
+        d = Post.get(Post.id == 3)
         r = False
 
         self.assertEqual(d, r)

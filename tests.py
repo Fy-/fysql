@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import sys, unittest
+import sys
+import unittest
 from tests.test_db_mysql import *
 
 if __name__ == '__main__':
