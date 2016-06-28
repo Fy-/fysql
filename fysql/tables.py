@@ -8,7 +8,6 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 import json
-import copy
 
 from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
@@ -31,7 +30,7 @@ class TableWatcher(type):
             for key, attr in clsdict.items():
                 if isinstance(attr, Column):
                     columns.append((key, attr))
-                    if attr.pkey == True:
+                    if attr.pkey is True:
                         pkey = True
                         cls._pkey = attr
                         cls._pkey_name = key
@@ -45,10 +44,10 @@ class TableWatcher(type):
 
             # Get db if herited
             if bases[0].__name__ != 'Table':
-                if bases[0].__dict__.has_key('db'):
+                if 'db' in bases[0].__dict__.keys():
                     db = bases[0].__dict__['db']
 
-            if db == False:
+            if db is False:
                 raise FysqlException('No database for {0} ({1})'.format(cls.__name__, cls))
 
             cls._name = cls.__name__.lower()
@@ -78,7 +77,7 @@ class TableWatcher(type):
 
             # add table to database.
             if isinstance(cls._database, Database) and not virtual:
-                if cls._database._tables.has_key(cls._name):
+                if cls._name in cls._database._tables.keys():
                     del cls._database._tables[cls._name]
 
                 cls._database._tables[cls._name] = cls

@@ -26,7 +26,7 @@ class ContainerWalker(object):
             return super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
 
         key = hashlib.md5(str(args[0])).hexdigest()
-        if not ContainerWalker._instances.has_key(key):
+        if key not in ContainerWalker._instances.keys():
             ContainerWalker._instances[key] = super(ContainerWalker, cls).__new__(cls, *args, **kwargs)
         return ContainerWalker._instances[key]
 
@@ -53,7 +53,7 @@ class ContainerWalker(object):
 
     @property
     def sql(self):
-        if self._sql == False:
+        if self._sql is False:
             self.prepare()
         return self._sql
 
@@ -71,7 +71,7 @@ class ResultContainer(object):
         self.sql2py = {}
         self.result = []
 
-        if self.cursor.description != None:
+        if self.cursor.description is not None:
             for i in range(len(self.cursor.description)):
                 self.sql2py[i] = self.cursor.description[i][0]
 
@@ -182,7 +182,7 @@ class CreateTableContainer(EntityExecutableContainer):
             column_create = EntityContainer(separator=' ')
             column_create += column.sql_entities['name']
 
-            if column.sql_type_size != None:
+            if column.sql_type_size is not None:
                 column_create += SQLEntity('{0}({1})'.format(column.sql_type, column.sql_type_size))
             else:
                 column_create += SQLEntity(column.sql_type)
@@ -193,7 +193,7 @@ class CreateTableContainer(EntityExecutableContainer):
             if column.unique and not column.index:
                 column_create += SQLEntity('UNIQUE')
 
-            if column.null == False:
+            if column.null is False:
                 column_create += SQLEntity('NOT NULL')
             else:
                 column_create += SQLEntity('NULL')
@@ -239,7 +239,7 @@ class InsertContainer(EntityExecutableContainer):
         for key, column in self.table._columns.items():
             value = getattr(self.instance, key)
             if value:
-                if column.pkey == True:
+                if column.pkey is True:
                     self.pkey_id = value
 
                 columns_names += column.sql_entities['name']
@@ -257,8 +257,8 @@ class InsertContainer(EntityExecutableContainer):
         self += SQLEntity(');')
 
     def execute(self):
-        cursor = self.table._database.execute(self.sql)
-        if self.pkey_id == False:
+        self.table._database.execute(self.sql)
+        if self.pkey_id is False:
             self.pkey_id = self.table._database.connection.insert_id()
 
         self.table._database.commit()
@@ -280,11 +280,11 @@ class CreateContainer(EntityExecutableContainer):
         columns_names = EntityContainer(separator=',')
         columns_values = EntityContainer(separator=',')
         for attr, value in kwargs.items():
-            if self.table._columns.has_key(attr):
+            if attr in self.table._columns.keys():
                 columns_names += self.table._columns[attr].sql_entities['name']
                 columns_values += self.table._columns[attr].escape(value)
 
-                if self.table._columns[attr].pkey == True:
+                if self.table._columns[attr].pkey is True:
                     self.pkey_id = value
 
                 self.filled.append(attr)
@@ -301,8 +301,8 @@ class CreateContainer(EntityExecutableContainer):
         self += SQLEntity(');')
 
     def execute(self):
-        cursor = self.table._database.execute(self.sql)
-        if self.pkey_id == False:
+        self.table._database.execute(self.sql)
+        if self.pkey_id is False:
             self.pkey_id = self.table._database.connection.insert_id()
 
         self.table._database.commit()
@@ -380,7 +380,7 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
 
     @_generative
     def where(self, *conditions):
-        if self._where == False:
+        if self._where is False:
             self += SQLEntity('WHERE')
             self._where = True
         else:
@@ -408,7 +408,7 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
 
     @_generative
     def order_by(self, column, order='DESC'):
-        if self._order == False:
+        if self._order is False:
             self += SQLEntity('ORDER BY')
             self._order = True
         else:
@@ -422,7 +422,7 @@ class ConditionableExecutableContainer(EntityExecutableContainer):
 
     @_generative
     def group_by(self, group_by):
-        if self._group == False:
+        if self._group is False:
             self += SQLEntity('GROUP BY')
             self._group = True
         else:

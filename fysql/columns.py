@@ -75,14 +75,14 @@ class Column(object):
             if hasattr(value, '__call__'):
                 value = value()
 
-            if self.quoted and not isinstance(value, Column) and no_quote == False:
+            if self.quoted and not isinstance(value, Column) and no_quote is False:
                 return '\'{0}\''.format(self.table._database.escape_string(self._escape(value)))
 
             return self._escape(value)
 
     def _condition(operator):
         """Lightweight factory which returns a method that builds an SQLCondition.
-        From peewee: 
+        From peewee:
             https://github.com/coleifer/peewee/blob/master/peewee.py#L508-L517
         """
 
@@ -155,7 +155,6 @@ class VirtualColumn(object):
 
                         instance._data[key]._data[k] = data
                         del instance._data[tk]
-                        exist = True
 
                 if not getattr(instance._data[key], instance._pkey_name):
                     return False
@@ -207,7 +206,7 @@ class TextColumn(Column):
 class DictColumn(TextColumn):
 
     def _escape(self, value):
-        if value == None:
+        if value is None:
             return cPickle.dumps({})
         return cPickle.dumps(value)
 
