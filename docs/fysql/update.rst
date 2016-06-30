@@ -19,13 +19,13 @@ Two ways to add items with FySQL, you can user :py:meth:`Table.create`, or :py:m
     user.firstname = 'TestFirstName'
     user.lastname  = 'TestLastName'
     user.role      = 'Admin'
-    >>> print user.insert()
     
+    >>> print user.insert()
     {"id": 3, "lastname": "TestLastName", "role": "Admin", "firstname": "TestFirstName"}
     
 Saving data
 -----------
-py:meth:`TableInstance.save`
+Use py:meth:`TableInstance.save`.
 
 .. code-block:: python
 
@@ -39,7 +39,7 @@ py:meth:`TableInstance.save`
 
 Deleting data
 -------------
-py:meth:`TableInstance.save`
+Use py:meth:`TableInstance.save`.
 
 .. code-block:: python
 
