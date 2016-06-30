@@ -12,5 +12,6 @@
    Retrieving Data <fysql/select>
    Updating/Deleting Data <fysql/update>
    Operators <fysql/operators>
+   RAW SQL <fysql/raw>
 
 .. include:: ../README.rst
