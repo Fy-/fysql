@@ -22,6 +22,7 @@ ColumnType                     MySQL
 :py:class:`TimeColumn`         time
 :py:class:`CharColumn`         varchar
 :py:class:`TextColumn`         longtext
+:py:class:`DictColumn`         longtext
 ============================== =================
 
 Special columns
@@ -29,6 +30,7 @@ Special columns
 ========================= ================= ==================================================
 Column Type               Database          Information
 ========================= ================= ==================================================
+:py:class:`DictColumn`    longtext          Represents a :py:class:`dict` instance
 :py:class:`VirtualColumn` None              Represents a :py:class:`Table` instance
 ========================= ================= ==================================================
 
@@ -43,6 +45,8 @@ Parameter                 Description
 ``default = None``        any value to use as a default.
 ``pkey = False``          whether this field is the primary key for the table.
 ``db_column = None``      string representing the database column to use if different.
+``setter``                callback function used when setting a column value. ``setter(val)``
+``getter``                callback function used when getting a column value. ``getter(val)``
 ========================= =================================================================
 
 Special parameters
@@ -60,4 +64,6 @@ Special parameters
 | :py:class:`TimeColumn`         | ``format``                                     |
 +--------------------------------+------------------------------------------------+
 | :py:class:`FKeyColumn`         | ``reference``                                  |
++--------------------------------+------------------------------------------------+
+| :py:class:`FKeyColumn`         | ``required``                                   |
 +--------------------------------+------------------------------------------------+
