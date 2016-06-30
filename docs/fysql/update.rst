@@ -25,7 +25,7 @@ Two ways to add items with FySQL, you can user :py:meth:`Table.create`, or :py:m
     
 Saving data
 -----------
-Use py:meth:`TableInstance.save`.
+Use :py:meth:`TableInstance.save`.
 
 .. code-block:: python
 
@@ -39,7 +39,7 @@ Use py:meth:`TableInstance.save`.
 
 Deleting data
 -------------
-Use py:meth:`TableInstance.save`.
+Use :py:meth:`TableInstance.save`.
 
 .. code-block:: python
 
