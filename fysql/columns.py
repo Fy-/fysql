@@ -7,7 +7,7 @@
 """
 from __future__ import unicode_literals
 import json
-import cPickle
+import pickle
 
 from .entities import SQLColumn, SQLCondition, SQLQuotedEntity
 from .exceptions import FysqlException
