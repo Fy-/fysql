@@ -10,7 +10,5 @@ setup(
     description='fysql is a small ORM.',
     packages=['fysql'],
     platforms='any',
-    install_requires=[
-        'MySQL-python>=1.2.5'
-    ]
+    install_requires=[]
 )

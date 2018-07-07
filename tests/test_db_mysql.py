@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
-from fysql import *
+from . import *
 
 database = MySQLDatabase('fysql', host='localhost', user='fysql', passwd='dev')
 
