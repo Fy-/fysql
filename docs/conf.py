@@ -3,8 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('_themes'))
 
-from fysql import __version__
-
+__version__ = '0.15'
 
 extensions = [
     'sphinx.ext.viewcode',
