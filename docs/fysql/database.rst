@@ -41,6 +41,7 @@ For now fysql only support MySQL.
         database.close()
 
 .. code-block:: python
+
     from fysql.databases import MySQLDatabase
     from flask import current_app as app
 
