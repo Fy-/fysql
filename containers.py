@@ -5,6 +5,7 @@
 	:copyright: (c) 2016 by Gasquez Florian
 	:license: MIT, see LICENSE for more details.
 """
+from __future__ import unicode_literals
 from functools import wraps
 import copy
 import hashlib
@@ -75,7 +76,10 @@ class ResultContainer(object):
 		self.result = []
 		if self.cursor.description is not None:
 			for i in range(len(self.cursor.description)):
-				self.sql2py[i] = self.cursor.description[i][0]
+				desc =  self.cursor.description[i][0]
+				if isinstance(desc, bytes):
+					desc = desc.decode('utf-8')
+				self.sql2py[i] = desc
 
 			self.parse()
 
@@ -96,6 +100,7 @@ class ResultContainer(object):
 
 		for k, f in self.sql2py.items():
 			tables = Tables.tables
+
 			id_table = f.split('_')[0]
 			id_column = f.split('_', 1)[1]
 
@@ -237,6 +242,7 @@ class InsertContainer(EntityExecutableContainer):
 
 		for key, column in self.table._columns.items():
 			value = getattr(self.instance, key)
+			print (key +':'+ value)
 			if value:
 				if column.pkey is True:
 					self.pkey_id = value

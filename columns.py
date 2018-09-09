@@ -189,9 +189,11 @@ class CharColumn(Column):
 
     def _escape(self, value):
         # @todo: to_unicode, escape_string
-        value = value
-        return value
-
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, bytes):
+            return value.decode('utf-8')
+        return str(value)
 
 class TextColumn(Column):
     sql_type = 'text'
@@ -199,8 +201,33 @@ class TextColumn(Column):
 
     def _escape(self, value):
         # @todo: to_unicode, escape_string
-        value = value
-        return value
+        if isinstance(value, str):
+            return value
+        elif isinstance(value, bytes):
+            return value.decode('utf-8')
+        return str(value)
+
+
+
+class ArrayColumn(TextColumn):
+
+    def _escape(self, value):
+        if value is None:
+            #return cPickle.dumps({})
+            json.dumps([])
+        return json.dumps(value)
+
+    def _py(self, value):
+        if value:
+            return json.loads(str(value))
+        else:
+            return {}
+
+    def _json(self, value):
+        try:
+            return json.dumps(value)
+        except:
+            return 'ArrayColumn: not JSON serializable'
 
 
 class DictColumn(TextColumn):
@@ -284,11 +311,38 @@ class TimeColumn(DateTimeColumn):
     sql_format = '%H:%M:%S'
 
 
+class PKeyCharColumn(CharColumn):
+
+    def __init__(self, **kwargs):
+        kwargs['pkey'] = True
+        super(PKeyCharColumn, self).__init__(**kwargs)
+
 class PKeyColumn(BigIntegerColumn):
 
     def __init__(self, **kwargs):
         kwargs['pkey'] = True
         super(PKeyColumn, self).__init__(**kwargs)
+
+class FKeyCharColumn(CharColumn):
+
+    def __init__(self, table, reference, link=False, required=True, **kwargs):
+        kwargs['index'] = True
+        self.reference = reference
+        self.required = required
+        self.relation_table = table
+        self.link = link if link else self.relation_table._columns['id']
+
+        super(FKeyCharColumn, self).__init__(**kwargs)
+
+    def bind(self, table, name):
+        super(FKeyCharColumn, self).bind(table, name)
+
+        # add foreign column in table
+        self.table._add_foreign(self)
+
+        # add a virtual column for results
+        vc = VirtualColumn(self.table, self.relation_table, self.reference)
+        setattr(self.table, self.reference, vc)  # @todo: alias to external columns with alias = reference
 
 
 class FKeyColumn(BigIntegerColumn):

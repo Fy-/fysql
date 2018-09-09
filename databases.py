@@ -8,10 +8,11 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from warnings import filterwarnings
+import mysql.connector as mysql_connector
 from .exceptions import FysqlException
 from .tables import Tables
-import pymysql
 from .static import Tables
+
 
 class Database(object):
 
@@ -95,7 +96,7 @@ class MySQLDatabase(Database):
 		conn_kwargs = {'charset': 'utf8mb4', 'use_unicode': True}
 		conn_kwargs.update(kwargs)
 
-		return pymysql.connect(
+		return mysql_connector.connect(
 			host=conn_kwargs['host'],
 			user=conn_kwargs['user'],
 			password=conn_kwargs['password'],
@@ -113,10 +114,25 @@ class MySQLDatabase(Database):
 		return cursor.rowcount
 
 	def _escape_string(self, value):
+		_escape_table = [chr(x) for x in range(128)]
+		_escape_table[0] = u'\\0'
+		_escape_table[ord('\\')] = u'\\\\'
+		_escape_table[ord('\n')] = u'\\n'
+		_escape_table[ord('\r')] = u'\\r'
+		_escape_table[ord('\032')] = u'\\Z'
+		_escape_table[ord('"')] = u'\\"'
+		_escape_table[ord("'")] = u"\\'"
+
+		def _escape_unicode(value):
+			"""escapes *value* without adding quote.
+			Value should be unicode
+			"""
+			return value.translate(_escape_table)
 		
-		#return self.connection.escape_string(value)
+
+		return _escape_unicode(value)
+
 		#return value.encode('raw_unicode_escape')
-		return self.connection.escape_string(value) 
 
 	def get_tables(self):
 		return [row for row, in self.execute('SHOW TABLES')]
