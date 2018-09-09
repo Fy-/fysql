@@ -15,9 +15,10 @@ For now fysql only support MySQL.
     from fysql import *
 
     class TableA(Table):
+        pass
 
     class TableB(Table):
-
+        pass
 
 
 .. note::
@@ -40,48 +41,48 @@ For now fysql only support MySQL.
             database.close()
 
     .. code-block:: python
-    from .fysql.databases import MySQLDatabase
-    from flask import current_app as app
+        from fysql.databases import MySQLDatabase
+        from flask import current_app as app
 
 
-    class FySQL(object):
-        """
-        Flask example
-        fysql = FySQl(app) or fysql = FySQL() -> fysql.init_app(app)
-        """
+        class FySQL(object):
+            """
+            Flask example
+            fysql = FySQl(app) or fysql = FySQL() -> fysql.init_app(app)
+            """
 
 
-        config = {}
-        name = ""
-        engine = MySQLDatabase
+            config = {}
+            name = ""
+            engine = MySQLDatabase
 
-        def __init__(self, app=None):
-            self.app = None
-            if app is not None:
-                self.init_app(app)
+            def __init__(self, app=None):
+                self.app = None
+                if app is not None:
+                    self.init_app(app)
 
 
-        def init_app(self, app):
-            self.config = app.config.get('DATABASE', {})
-            self.name = self.config['db']
+            def init_app(self, app):
+                self.config = app.config.get('DATABASE', {})
+                self.name = self.config['db']
 
-            self.conn_kwargs = {}
-            self.engine = MySQLDatabase
-            for key, value in self.config.items():
-                if key not in ['engine', 'db']:
-                    self.conn_kwargs[key] = value
+                self.conn_kwargs = {}
+                self.engine = MySQLDatabase
+                for key, value in self.config.items():
+                    if key not in ['engine', 'db']:
+                        self.conn_kwargs[key] = value
 
-            if hasattr(app, 'teardown_appcontext'):
-                app.teardown_appcontext(self.teardown)
-            else:
-                app.teardown_request(self.teardown)
+                if hasattr(app, 'teardown_appcontext'):
+                    app.teardown_appcontext(self.teardown)
+                else:
+                    app.teardown_request(self.teardown)
 
-            app.fysql = self
-            self.connect()
+                app.fysql = self
+                self.connect()
 
-        def connect(self):
-            self.db = self.engine(self.name, **self.conn_kwargs)
+            def connect(self):
+                self.db = self.engine(self.name, **self.conn_kwargs)
 
-        def teardown(self, exception):
-            self.db.close()
+            def teardown(self, exception):
+                self.db.close()
 
