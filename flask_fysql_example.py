@@ -3,10 +3,6 @@ from fysql.databases import MySQLDatabase
 from flask import current_app as app
 
 class FySQL(object):
-    config = {}
-    name = ""
-    engine = MySQLDatabase
-
     def __init__(self, app=None):
         self.app = None
         if app is not None:
