@@ -9,11 +9,11 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 import json
 
-from .databases import Database
 from .columns import Column, PKeyColumn, FKeyColumn
 from .entities import SQLTable
 from .containers import SelectContainer, CreateContainer, DropContainer, InsertContainer, SaveContainer, RemoveContainer, CreateTableContainer
 from .exceptions import FysqlException
+from .static import Tables
 
 
 class TableWatcher(type):
@@ -48,8 +48,8 @@ class TableWatcher(type):
                 if 'db' in bases[0].__dict__.keys():
                     db = bases[0].__dict__['db']
 
-            if db is False:
-                raise FysqlException('No database for {0} ({1})'.format(cls.__name__, cls))
+            #if db is False:
+            #    raise FysqlException('No database for {0} ({1})'.format(cls.__name__, cls))
 
             cls._name = cls.__name__.lower()
             cls._db_table = db_table if db_table else cls._name
@@ -59,7 +59,6 @@ class TableWatcher(type):
             cls._backrefs = OrderedDict()
             cls._for_tables = OrderedDict()
             cls._foreigns = []
-            cls._database = db
 
             # Add a primary key named 'id' if no primary key
             if not pkey:
@@ -76,12 +75,11 @@ class TableWatcher(type):
                 if column.default:
                     cls._set_default(key, column.default)  # save default value
 
-            # add table to database.
-            if isinstance(cls._database, Database) and not virtual:
-                if cls._name in cls._database._tables.keys():
-                    del cls._database._tables[cls._name]
+            # add table.
+            if cls._name in Tables.tables.keys():
+                del Tables.tables[cls._name]
 
-                cls._database._tables[cls._name] = cls
+            Tables.tables[cls._name] = cls
 
         super(TableWatcher, cls).__init__(name, bases, clsdict)
 
@@ -91,7 +89,7 @@ class Table(object, metaclass=TableWatcher):
 
     def __init__(self):
         self._data = OrderedDict()
-
+    
     def __load__(self):
         pass
 

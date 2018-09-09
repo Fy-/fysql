@@ -9,8 +9,9 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from warnings import filterwarnings
 from .exceptions import FysqlException
-
-from . import pymysql
+from .tables import Tables
+import pymysql
+from .static import Tables
 
 class Database(object):
 
@@ -19,7 +20,9 @@ class Database(object):
 		self.closed = True
 		self._connection = False
 		self.database = database
-		self._tables = OrderedDict()
+		
+		for key, value in Tables.tables.items():
+			value._database = self
 
 	@property
 	def connection(self):
@@ -28,10 +31,12 @@ class Database(object):
 			self.closed = False
 		return self._connection
 
-	def create_all(self):
-		for key, table in self._tables.items():
-			table.drop_table()
-			table.create_table()
+	def create_all(self, ignore=[]):
+		for key, table in Tables.tables.items():
+			print(table)
+			if table not in ignore:
+				table.drop_table()
+				table.create_table()
 
 	def connect(self):
 		return self.connection
@@ -87,7 +92,7 @@ class MySQLDatabase(Database):
 	def _connect(self, database, **kwargs):
 
 
-		conn_kwargs = {'charset': 'utf8', 'use_unicode': True}
+		conn_kwargs = {'charset': 'utf8mb4', 'use_unicode': True}
 		conn_kwargs.update(kwargs)
 
 		return pymysql.connect(
@@ -95,14 +100,14 @@ class MySQLDatabase(Database):
 			user=conn_kwargs['user'],
 			password=conn_kwargs['password'],
 			db=database,
-			charset='utf8mb4'
+			charset=conn_kwargs['charset'],
 		)
 
 	def _close(self):
 		self.connection.close()
 
 	def _insert_id(self, cursor):
-		return cursor.get_last_id()
+		return cursor.lastrowid 
 
 	def _row_count(self, cursor):
 		return cursor.rowcount

@@ -11,6 +11,7 @@ import hashlib
 
 from .entities import SQLEntity, SQLJoin, SQLCondition, SQLColumn
 from .columns import FKeyColumn, PKeyColumn, IntegerColumn
+from .static import Tables
 
 '''
 class ContainerWalkerType(type):
@@ -94,7 +95,7 @@ class ResultContainer(object):
 		item = self.table()
 
 		for k, f in self.sql2py.items():
-			tables = self.table._database._tables
+			tables = Tables.tables
 			id_table = f.split('_')[0]
 			id_column = f.split('_', 1)[1]
 

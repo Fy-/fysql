@@ -16,9 +16,7 @@ Definition of your tables.
 
     database = MySQLDatabase('db', host='localhost', user='x', passwd='x')
 
-    class User(Table):
-        db = database
-    
+    class User(Table):    
         firstname = CharColumn(max_length=50)
         lastname  = CharColumn(max_length=50)
         role      = CharColumn(index=True, unique=True)

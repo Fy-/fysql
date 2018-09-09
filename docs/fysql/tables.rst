@@ -12,13 +12,11 @@ A simple user Table
 -------------------
 
 For database check :ref:`database`.
+Support only one database but it's an easy fix just extend Table and check database.py.
 
 .. code-block:: python
     
-    class FyTables(Table):
-        db = database 
-
-    class User(FyTables):
+    class User(Table):
         username = CharColumn()
 
 .. _complex-table:
@@ -28,12 +26,12 @@ Tables for a blog
 
 .. code-block:: python
 
-    class User(FyTables):
+    class User(Table):
         firstname = CharColumn(max_length=50)
         lastname  = CharColumn(max_length=50)
         role      = CharColumn(index=True, unique=True)
 
-    class Post(FyTables):
+    class Post(Table):
         title   = CharColumn(default='Post title', max_length=255)
         id_user = FKeyColumn(table=User, reference='user')
 

@@ -9,28 +9,15 @@ For now fysql only support MySQL.
 
     database = MySQLDatabase('mydb', host='localhost', user='x', passwd='x')
 
-The easy way:
 
 .. code-block:: python
 
     from fysql import *
 
     class TableA(Table):
-        db = database
 
     class TableB(Table):
-        db = database
 
-
-The good way to do this is to create a base class and all your tables will extend it.
-
-.. code-block:: python
-    
-    class MyDBTables(Table):
-        db = database
-
-    class TableA(MyDBTables): pass
-    class TableB(MyDBTables): pass
 
 
 .. note::
@@ -51,3 +38,50 @@ The good way to do this is to create a base class and all your tables will exten
         @app.teardown_request
         def teardown_request(exception=None):
             database.close()
+
+    .. code-block:: python
+    from .fysql.databases import MySQLDatabase
+    from flask import current_app as app
+
+
+    class FySQL(object):
+        """
+        Flask example
+        fysql = FySQl(app) or fysql = FySQL() -> fysql.init_app(app)
+        """
+
+
+        config = {}
+        name = ""
+        engine = MySQLDatabase
+
+        def __init__(self, app=None):
+            self.app = None
+            if app is not None:
+                self.init_app(app)
+
+
+        def init_app(self, app):
+            self.config = app.config.get('DATABASE', {})
+            self.name = self.config['db']
+
+            self.conn_kwargs = {}
+            self.engine = MySQLDatabase
+            for key, value in self.config.items():
+                if key not in ['engine', 'db']:
+                    self.conn_kwargs[key] = value
+
+            if hasattr(app, 'teardown_appcontext'):
+                app.teardown_appcontext(self.teardown)
+            else:
+                app.teardown_request(self.teardown)
+
+            app.fysql = self
+            self.connect()
+
+        def connect(self):
+            self.db = self.engine(self.name, **self.conn_kwargs)
+
+        def teardown(self, exception):
+            self.db.close()
+
