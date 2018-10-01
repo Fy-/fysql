@@ -1,6 +1,6 @@
 fysql
 =====
-
+This project is dead for now - I'll publish a new version in January 2019
 Still in developpement
 
 fysql is a small python ORM inpired by  `peewee <https://github.com/coleifer/peewee>`_.
